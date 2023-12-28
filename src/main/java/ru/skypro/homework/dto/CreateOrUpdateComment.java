@@ -7,7 +7,6 @@ import lombok.Setter;
 @Data
 @Getter
 @Setter
-public class Login {
-    private String username;
-    private String password;
+public class CreateOrUpdateComment {
+    private String text;
 }

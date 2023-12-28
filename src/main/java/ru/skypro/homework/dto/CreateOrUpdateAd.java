@@ -7,7 +7,8 @@ import lombok.Setter;
 @Data
 @Getter
 @Setter
-public class Login {
-    private String username;
-    private String password;
+public class CreateOrUpdateAd {
+    private String title;
+    private int price;
+    private String description;
 }

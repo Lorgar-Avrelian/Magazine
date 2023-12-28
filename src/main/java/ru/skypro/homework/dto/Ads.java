@@ -4,10 +4,12 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
+
 @Data
 @Getter
 @Setter
-public class Login {
-    private String username;
-    private String password;
+public class Ads {
+    private int count;
+    private List<Ad> result;
 }
