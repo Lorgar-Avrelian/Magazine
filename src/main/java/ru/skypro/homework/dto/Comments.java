@@ -1,15 +1,24 @@
 package ru.skypro.homework.dto;
 
-import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
-
 import java.util.List;
 
-@Data
-@Getter
-@Setter
 public class Comments {
     private int count;
     private List<Comment> result;
+
+    public int getCount() {
+        return count;
+    }
+
+    public void setCount(int count) {
+        this.count = count;
+    }
+
+    public List<Comment> getResult() {
+        return result;
+    }
+
+    public void setResult(List<Comment> result) {
+        this.result = result;
+    }
 }
