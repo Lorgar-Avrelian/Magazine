@@ -1,0 +1,119 @@
+package ru.skypro.homework.entity;
+
+import com.fasterxml.jackson.annotation.JsonBackReference;
+
+import javax.persistence.*;
+import java.util.Objects;
+
+import static javax.persistence.GenerationType.IDENTITY;
+
+@Entity
+@Table(name = "ad")
+public class Ad {
+    @Id
+    @GeneratedValue(strategy = IDENTITY)
+    private Integer id;
+    @ManyToOne(fetch = FetchType.EAGER)
+    private User author;
+    private String image;
+    private int pk;
+    private int price;
+    private String title;
+    private String description;
+
+    public Ad() {
+    }
+
+    public Ad(Integer id, User author, String image, int pk, int price, String title, String description) {
+        this.id = id;
+        this.author = author;
+        this.image = image;
+        this.pk = pk;
+        this.price = price;
+        this.title = title;
+        this.description = description;
+    }
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    @JsonBackReference
+    public User getAuthor() {
+        return author;
+    }
+
+    public void setAuthor(User author) {
+        this.author = author;
+    }
+
+    public String getImage() {
+        return image;
+    }
+
+    public void setImage(String image) {
+        this.image = image;
+    }
+
+    public int getPk() {
+        return pk;
+    }
+
+    public void setPk(int pk) {
+        this.pk = pk;
+    }
+
+    public int getPrice() {
+        return price;
+    }
+
+    public void setPrice(int price) {
+        this.price = price;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Ad ad = (Ad) o;
+        return pk == ad.pk && price == ad.price && Objects.equals(id, ad.id) && Objects.equals(author, ad.author) && Objects.equals(image, ad.image) && Objects.equals(title, ad.title) && Objects.equals(description, ad.description);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, author, image, pk, price, title, description);
+    }
+
+    @Override
+    public String toString() {
+        return "Ad{" +
+                "id=" + id +
+                ", author=" + author +
+                ", image='" + image + '\'' +
+                ", pk=" + pk +
+                ", price=" + price +
+                ", title='" + title + '\'' +
+                ", description='" + description + '\'' +
+                '}';
+    }
+}
