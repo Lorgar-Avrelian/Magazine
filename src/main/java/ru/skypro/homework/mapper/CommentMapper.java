@@ -1,17 +1,18 @@
 package ru.skypro.homework.mapper;
 
-import org.mapstruct.Mapper;
-import ru.skypro.homework.dto.Comment;
-import ru.skypro.homework.dto.Comments;
+import org.springframework.stereotype.Service;
+import ru.skypro.homework.dto.CommentDTO;
+import ru.skypro.homework.dto.CommentsDTO;
+import ru.skypro.homework.entity.Comment;
 import ru.skypro.homework.entity.User;
 
 import java.util.ArrayList;
 import java.util.List;
 
-@Mapper
+@Service
 public interface CommentMapper {
-    default Comment commentToCommentDto(ru.skypro.homework.entity.Comment comment) {
-        Comment commentDto = new Comment();
+    default CommentDTO commentToCommentDto(Comment comment) {
+        CommentDTO commentDto = new CommentDTO();
         commentDto.setAuthor(comment.getAuthor().getId());
         commentDto.setAuthorImage(comment.getAuthorImage());
         commentDto.setAuthorFirstName(comment.getAuthorFirstName());
@@ -21,20 +22,20 @@ public interface CommentMapper {
         return commentDto;
     }
 
-    default ru.skypro.homework.entity.Comment commentDtoToComment(Comment commentDto, User author) {
-        ru.skypro.homework.entity.Comment comment = new ru.skypro.homework.entity.Comment(null, author, commentDto.getAuthorImage(), commentDto.getAuthorFirstName(), commentDto.getCreatedAt(), commentDto.getPk(), commentDto.getText(), null);
+    default Comment commentDtoToComment(CommentDTO commentDto, User author) {
+        Comment comment = new Comment(null, author, commentDto.getAuthorImage(), commentDto.getAuthorFirstName(), commentDto.getCreatedAt(), commentDto.getPk(), commentDto.getText(), null);
         return comment;
     }
 
-    default Comments commentListToCommentsDto(List<ru.skypro.homework.entity.Comment> commentList) {
-        Comments comments = new Comments();
+    default CommentsDTO commentListToCommentsDto(List<Comment> commentList) {
+        CommentsDTO comments = new CommentsDTO();
         comments.setCount(commentList.size());
-        List<Comment> commentDtoList = new ArrayList<>();
-        for (ru.skypro.homework.entity.Comment comment : commentList) {
-            Comment commentDto = commentToCommentDto(comment);
-            commentDtoList.add(commentDto);
+        List<CommentDTO> commentDTODtoList = new ArrayList<>();
+        for (Comment comment : commentList) {
+            CommentDTO commentDto = commentToCommentDto(comment);
+            commentDTODtoList.add(commentDto);
         }
-        comments.setResult(commentDtoList);
+        comments.setResult(commentDTODtoList);
         return comments;
     }
 }

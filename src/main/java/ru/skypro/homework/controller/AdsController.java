@@ -4,9 +4,9 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import ru.skypro.homework.dto.Ad;
-import ru.skypro.homework.dto.Ads;
-import ru.skypro.homework.dto.CreateOrUpdateAd;
+import ru.skypro.homework.dto.AdDTO;
+import ru.skypro.homework.dto.AdsDTO;
+import ru.skypro.homework.dto.CreateOrUpdateAdDTO;
 import ru.skypro.homework.service.impl.AdsServiceImpl;
 
 @RestController
@@ -19,7 +19,7 @@ public class AdsController {
     }
 
     @GetMapping
-    public ResponseEntity<Ads> getAll() {
+    public ResponseEntity<AdsDTO> getAll() {
         if (adsService.getAll() != null) {
             return ResponseEntity.ok().body(adsService.getAll());
         } else {
@@ -28,9 +28,9 @@ public class AdsController {
     }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<Ad> postAd(@RequestParam CreateOrUpdateAd ad, @RequestBody MultipartFile image) {
-        Ad newAd = adsService.addAd(ad, image);
-        return ResponseEntity.status(201).body(newAd);
+    public ResponseEntity<AdDTO> postAd(@RequestParam CreateOrUpdateAdDTO ad, @RequestBody MultipartFile image) {
+        AdDTO newAdDTO = adsService.addAd(ad, image);
+        return ResponseEntity.status(201).body(newAdDTO);
     }
 
     @GetMapping(path = "/{id}")

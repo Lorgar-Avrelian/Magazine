@@ -1,6 +1,6 @@
 package ru.skypro.homework.dto;
 
-public class Ad {
+public class AdDTO {
     private int author;
     private String image;
     private int pk;

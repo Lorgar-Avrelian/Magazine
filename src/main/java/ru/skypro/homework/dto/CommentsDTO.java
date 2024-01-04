@@ -2,9 +2,9 @@ package ru.skypro.homework.dto;
 
 import java.util.List;
 
-public class Comments {
+public class CommentsDTO {
     private int count;
-    private List<Comment> result;
+    private List<CommentDTO> result;
 
     public int getCount() {
         return count;
@@ -14,11 +14,11 @@ public class Comments {
         this.count = count;
     }
 
-    public List<Comment> getResult() {
+    public List<CommentDTO> getResult() {
         return result;
     }
 
-    public void setResult(List<Comment> result) {
+    public void setResult(List<CommentDTO> result) {
         this.result = result;
     }
 }

@@ -1,10 +1,12 @@
 package ru.skypro.homework.controller;
 
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import ru.skypro.homework.dto.Register;
-import ru.skypro.homework.dto.Role;
-import ru.skypro.homework.dto.NewPassword;
+import org.springframework.web.multipart.MultipartFile;
+import ru.skypro.homework.dto.NewPasswordDTO;
+import ru.skypro.homework.dto.UpdateUserDTO;
+import ru.skypro.homework.dto.UserDTO;
 import ru.skypro.homework.service.impl.UsersServiceImpl;
 
 @RestController
@@ -17,7 +19,7 @@ public class UsersController {
     }
 
     @PostMapping(path = "/set_password")
-    public ResponseEntity setPassword(@RequestBody NewPassword newPassword) {
+    public ResponseEntity setPassword(@RequestBody NewPasswordDTO newPassword) {
         if (newPassword.getCurrentPassword() != null && newPassword.getNewPassword() != null && !newPassword.getNewPassword().equals(newPassword.getCurrentPassword())) {
             usersService.setPassword(newPassword);
             return ResponseEntity.ok().build();
@@ -27,25 +29,17 @@ public class UsersController {
     }
 
     @GetMapping(path = "/me")
-    public ResponseEntity me() {
-        Register user = new Register();
-        user.setFirstName("test name");
-        user.setLastName("test lastname");
-        user.setPhone("test phone");
-        user.setRole(Role.USER);
-        if (user != null) {
-            return ResponseEntity.ok().body(user);
-        } else {
-            return ResponseEntity.status(401).build();
-        }
+    public ResponseEntity<UserDTO> me() {
+        return ResponseEntity.ok().body(usersService.getUser());
     }
 
     @PatchMapping(path = "/me")
-    public ResponseEntity meUpdate() {
-        return ResponseEntity.ok().build();
+    public ResponseEntity<UpdateUserDTO> meUpdate(@RequestBody UpdateUserDTO updateUser) {
+        return ResponseEntity.ok().body(usersService.getUser(updateUser));
     }
-    @PatchMapping(path = "/me/image")
-    public ResponseEntity image() {
+    @PatchMapping(path = "/me/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity meImage(@RequestBody MultipartFile image) {
+        usersService.setImage(image);
         return ResponseEntity.ok().build();
     }
 }

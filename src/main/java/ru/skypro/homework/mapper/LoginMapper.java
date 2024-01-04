@@ -1,14 +1,15 @@
 package ru.skypro.homework.mapper;
 
 import org.mapstruct.Mapper;
-import ru.skypro.homework.dto.Login;
-import ru.skypro.homework.dto.Register;
+import ru.skypro.homework.dto.LoginDTO;
+import ru.skypro.homework.dto.RegisterDTO;
+import ru.skypro.homework.entity.Login;
 
-@Mapper
+@Mapper(componentModel = "spring")
 public interface LoginMapper {
-    Login loginToLoginDto(ru.skypro.homework.entity.Login login);
+    LoginDTO loginToLoginDto(Login login);
 
-    ru.skypro.homework.entity.Login loginDtoToLogin(Login login);
+    Login loginDtoToLogin(LoginDTO login);
 
-    ru.skypro.homework.entity.Login registerDtoToLogin(Register register);
+    Login registerDtoToLogin(RegisterDTO register);
 }

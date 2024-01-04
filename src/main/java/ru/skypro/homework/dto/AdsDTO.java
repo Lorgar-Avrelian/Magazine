@@ -2,9 +2,9 @@ package ru.skypro.homework.dto;
 
 import java.util.List;
 
-public class Ads {
+public class AdsDTO {
     private int count;
-    private List<Ad> result;
+    private List<AdDTO> result;
 
     public int getCount() {
         return count;
@@ -14,11 +14,11 @@ public class Ads {
         this.count = count;
     }
 
-    public List<Ad> getResult() {
+    public List<AdDTO> getResult() {
         return result;
     }
 
-    public void setResult(List<Ad> result) {
+    public void setResult(List<AdDTO> result) {
         this.result = result;
     }
 }
