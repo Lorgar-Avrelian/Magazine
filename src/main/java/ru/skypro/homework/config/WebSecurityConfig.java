@@ -1,5 +1,6 @@
 package ru.skypro.homework.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -15,7 +16,10 @@ import static org.springframework.security.config.Customizer.withDefaults;
 
 @Configuration
 public class WebSecurityConfig {
-
+    @Value("${user.name}")
+    String username;
+    @Value("${user.password}")
+    String password;
     private static final String[] AUTH_WHITELIST = {
             "/swagger-resources/**",
             "/swagger-ui.html",
@@ -29,8 +33,8 @@ public class WebSecurityConfig {
     public InMemoryUserDetailsManager userDetailsService(PasswordEncoder passwordEncoder) {
         UserDetails user =
                 User.builder()
-                        .username("user@gmail.com")
-                        .password("password")
+                        .username(username)
+                        .password(password)
                         .passwordEncoder(passwordEncoder::encode)
                         .roles(Role.USER.name())
                         .build();
@@ -58,5 +62,4 @@ public class WebSecurityConfig {
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
-
 }
