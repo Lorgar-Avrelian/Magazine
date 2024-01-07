@@ -12,11 +12,10 @@ import static javax.persistence.GenerationType.IDENTITY;
 public class Ad {
     @Id
     @GeneratedValue(strategy = IDENTITY)
-    private Integer id;
+    private Integer pk;
     @ManyToOne(fetch = FetchType.EAGER)
     private User author;
     private String image;
-    private int pk;
     private int price;
     private String title;
     private String description;
@@ -24,22 +23,21 @@ public class Ad {
     public Ad() {
     }
 
-    public Ad(Integer id, User author, String image, int pk, int price, String title, String description) {
-        this.id = id;
+    public Ad(Integer pk, User author, String image, int price, String title, String description) {
+        this.pk = pk;
         this.author = author;
         this.image = image;
-        this.pk = pk;
         this.price = price;
         this.title = title;
         this.description = description;
     }
 
-    public Integer getId() {
-        return id;
+    public Integer getPk() {
+        return pk;
     }
 
-    public void setId(Integer id) {
-        this.id = id;
+    public void setPk(Integer pk) {
+        this.pk = pk;
     }
 
     @JsonBackReference
@@ -57,14 +55,6 @@ public class Ad {
 
     public void setImage(String image) {
         this.image = image;
-    }
-
-    public int getPk() {
-        return pk;
-    }
-
-    public void setPk(int pk) {
-        this.pk = pk;
     }
 
     public int getPrice() {
@@ -96,21 +86,20 @@ public class Ad {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Ad ad = (Ad) o;
-        return pk == ad.pk && price == ad.price && Objects.equals(id, ad.id) && Objects.equals(author, ad.author) && Objects.equals(image, ad.image) && Objects.equals(title, ad.title) && Objects.equals(description, ad.description);
+        return price == ad.price && Objects.equals(pk, ad.pk) && Objects.equals(author, ad.author) && Objects.equals(image, ad.image) && Objects.equals(title, ad.title) && Objects.equals(description, ad.description);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, author, image, pk, price, title, description);
+        return Objects.hash(pk, author, image, price, title, description);
     }
 
     @Override
     public String toString() {
         return "Ad{" +
-                "id=" + id +
+                "pk=" + pk +
                 ", author=" + author +
                 ", image='" + image + '\'' +
-                ", pk=" + pk +
                 ", price=" + price +
                 ", title='" + title + '\'' +
                 ", description='" + description + '\'' +

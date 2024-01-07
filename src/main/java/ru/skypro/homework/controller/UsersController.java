@@ -9,6 +9,7 @@ import ru.skypro.homework.dto.UpdateUserDTO;
 import ru.skypro.homework.dto.UserDTO;
 import ru.skypro.homework.service.impl.UsersServiceImpl;
 
+@CrossOrigin(value = "http://localhost:3000")
 @RestController
 @RequestMapping(path = "/users")
 public class UsersController {
@@ -19,13 +20,9 @@ public class UsersController {
     }
 
     @PostMapping(path = "/set_password")
-    public ResponseEntity setPassword(@RequestBody NewPasswordDTO newPassword) {
-        if (newPassword.getCurrentPassword() != null && newPassword.getNewPassword() != null && !newPassword.getNewPassword().equals(newPassword.getCurrentPassword())) {
+    public ResponseEntity<?> setPassword(@RequestBody NewPasswordDTO newPassword) {
             usersService.setPassword(newPassword);
             return ResponseEntity.ok().build();
-        } else {
-            return ResponseEntity.status(403).build();
-        }
     }
 
     @GetMapping(path = "/me")
@@ -35,10 +32,11 @@ public class UsersController {
 
     @PatchMapping(path = "/me")
     public ResponseEntity<UpdateUserDTO> meUpdate(@RequestBody UpdateUserDTO updateUser) {
-        return ResponseEntity.ok().body(usersService.getUser(updateUser));
+        return ResponseEntity.ok().body(usersService.updateUser(updateUser));
     }
+
     @PatchMapping(path = "/me/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity meImage(@RequestBody MultipartFile image) {
+    public ResponseEntity<?> meImage(@RequestBody MultipartFile image) {
         usersService.setImage(image);
         return ResponseEntity.ok().build();
     }

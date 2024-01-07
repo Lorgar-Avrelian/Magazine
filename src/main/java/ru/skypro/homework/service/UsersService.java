@@ -10,7 +10,7 @@ public interface UsersService {
 
     UserDTO getUser();
 
-    UpdateUserDTO getUser(UpdateUserDTO updateUserDto);
+    UpdateUserDTO updateUser(UpdateUserDTO updateUserDto);
 
     void setImage(MultipartFile image);
 }

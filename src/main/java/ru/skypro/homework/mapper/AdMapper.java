@@ -24,7 +24,7 @@ public interface AdMapper {
     }
 
     default Ad adDtoToAd(AdDTO adDto, User author) {
-        Ad ad = new Ad(null, author, adDto.getImage(), adDto.getPk(), adDto.getPrice(), adDto.getTitle(), null);
+        Ad ad = new Ad(adDto.getPk(), author, adDto.getImage(), adDto.getPrice(), adDto.getTitle(), null);
         return ad;
     }
 
@@ -42,8 +42,10 @@ public interface AdMapper {
 
     Ad createOrUpdateAdDtoToAd(CreateOrUpdateAdDTO createOrUpdateAd);
 
+    CreateOrUpdateAdDTO adToCreateOrUpdateDto(Ad ad);
+
     default Ad extendedAdDtoToAd(ExtendedAdDTO extendedAd, User author) {
-        Ad ad = new Ad(null, author, extendedAd.getImage(), extendedAd.getPk(), extendedAd.getPrice(), extendedAd.getTitle(), extendedAd.getDescription());
+        Ad ad = new Ad(extendedAd.getPk(), author, extendedAd.getImage(), extendedAd.getPrice(), extendedAd.getTitle(), extendedAd.getDescription());
         return ad;
     }
 

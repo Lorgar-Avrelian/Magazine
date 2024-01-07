@@ -1,10 +1,11 @@
 package ru.skypro.homework.entity;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import ru.skypro.homework.dto.Role;
 
-import javax.persistence.*;
-import java.util.List;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.Table;
 import java.util.Objects;
 
 import static javax.persistence.GenerationType.IDENTITY;
@@ -21,11 +22,12 @@ public class User {
     private String phone;
     private Role role;
     private String image;
+    private String password;
 
     public User() {
     }
 
-    public User(Integer id, String email, String firstName, String lastName, String phone, Role role, String image) {
+    public User(Integer id, String email, String firstName, String lastName, String phone, Role role, String image, String password) {
         this.id = id;
         this.email = email;
         this.firstName = firstName;
@@ -33,6 +35,7 @@ public class User {
         this.phone = phone;
         this.role = role;
         this.image = image;
+        this.password = password;
     }
 
     public Integer getId() {
@@ -91,17 +94,25 @@ public class User {
         this.image = image;
     }
 
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         User user = (User) o;
-        return Objects.equals(id, user.id) && Objects.equals(email, user.email) && Objects.equals(firstName, user.firstName) && Objects.equals(lastName, user.lastName) && Objects.equals(phone, user.phone) && role == user.role && Objects.equals(image, user.image);
+        return Objects.equals(id, user.id) && Objects.equals(email, user.email) && Objects.equals(firstName, user.firstName) && Objects.equals(lastName, user.lastName) && Objects.equals(phone, user.phone) && role == user.role;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, email, firstName, lastName, phone, role, image);
+        return Objects.hash(id, email, firstName, lastName, phone, role);
     }
 
     @Override
@@ -114,6 +125,7 @@ public class User {
                 ", phone='" + phone + '\'' +
                 ", role=" + role +
                 ", image='" + image + '\'' +
+                ", password='" + password + '\'' +
                 '}';
     }
 }
