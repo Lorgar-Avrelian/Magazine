@@ -1,5 +1,6 @@
 package ru.skypro.homework.controller;
 
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -44,7 +45,9 @@ public class AuthenticationController {
             return ResponseEntity.status(401).build();
         }
         String token = jwtTokenUtils.generateToken(userDetails);
-        return ResponseEntity.ok(new JwtToken(token));
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.setBearerAuth(token);
+        return ResponseEntity.ok().headers(httpHeaders).build();
     }
 
     @PostMapping(path = "/register")
