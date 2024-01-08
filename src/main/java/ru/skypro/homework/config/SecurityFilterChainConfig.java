@@ -49,7 +49,7 @@ public class SecurityFilterChainConfig {
             .authorizeRequests(
                     authorization ->
                             authorization
-                                    .mvcMatchers("/ads", "/login", "/register")
+                                    .mvcMatchers("/ads", "/login", "/register", "/swagger-resources/**", "/swagger-ui.html", "/v3/api-docs", "/webjars/**")
                                     .permitAll()
                                     .mvcMatchers("/ads/**", "/users/**")
                                     .authenticated())

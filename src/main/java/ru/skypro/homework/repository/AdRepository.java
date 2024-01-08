@@ -8,7 +8,7 @@ import java.util.List;
 
 @Repository
 public interface AdRepository extends JpaRepository<Ad, Integer> {
-    Ad findByAuthorAndTitleAndPriceAndDescription(Integer authorId, String title, int price, String description);
+    Ad findByAuthorIdAndTitleAndPriceAndDescription(Integer authorId, String title, int price, String description);
 
     List<Ad> findByPk(Integer authorId);
 }
