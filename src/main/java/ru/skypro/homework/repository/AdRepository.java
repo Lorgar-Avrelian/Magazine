@@ -10,5 +10,5 @@ import java.util.List;
 public interface AdRepository extends JpaRepository<Ad, Integer> {
     Ad findByAuthorAndTitleAndPriceAndDescription(Integer authorId, String title, int price, String description);
 
-    List<Ad> findByAuthor(Integer authorId);
+    List<Ad> findByPk(Integer authorId);
 }

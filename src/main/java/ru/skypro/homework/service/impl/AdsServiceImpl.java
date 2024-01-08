@@ -90,7 +90,7 @@ public class AdsServiceImpl implements AdsService {
         } catch (IOException e) {
             log.error(e.getMessage());
         }
-        ad.setImage(filePath.toString());
+        ad.setImage(String.valueOf(filePath));
         ad = adRepository.save(ad);
         if (ad != null) {
             return adMapper.adToAdDto(ad);
@@ -155,7 +155,7 @@ public class AdsServiceImpl implements AdsService {
         }
         List<Ad> adsList;
         try {
-            adsList = adRepository.findByAuthor(user.getId());
+            adsList = adRepository.findByPk(user.getId());
         } catch (Exception e) {
             log.error(e.getMessage());
             return null;

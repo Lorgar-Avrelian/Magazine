@@ -23,7 +23,7 @@ public class AdsController {
     }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<AdDTO> postAd(@RequestParam CreateOrUpdateAdDTO ad, @RequestBody MultipartFile image) {
+    public ResponseEntity<AdDTO> postAd(@RequestBody CreateOrUpdateAdDTO ad, @RequestParam MultipartFile image) {
         return ResponseEntity.status(201).body(adsService.addAd(ad, image));
     }
 

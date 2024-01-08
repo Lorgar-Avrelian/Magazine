@@ -1,7 +1,7 @@
 package ru.skypro.homework.controller;
 
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -15,24 +15,30 @@ import ru.skypro.homework.service.impl.AuthenticationServiceImpl;
 @RestController
 public class AuthenticationController {
     private final AuthenticationServiceImpl authenticationService;
-    private final AuthenticationManager authenticationManager;
 
-    public AuthenticationController(AuthenticationServiceImpl authenticationService, AuthenticationManager authenticationManager) {
+    public AuthenticationController(AuthenticationServiceImpl authenticationService) {
         this.authenticationService = authenticationService;
-        this.authenticationManager = authenticationManager;
     }
 
     @PostMapping(path = "/login")
     public ResponseEntity<?> login(@RequestBody LoginDTO loginDTO) {
         User user = authenticationService.login(loginDTO);
-        return ResponseEntity.ok().build();
+        if (user != null) {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setBasicAuth(user.getEmail(), user.getPassword());
+            return ResponseEntity.ok().headers(headers).build();
+        } else {
+            return ResponseEntity.status(401).build();
+        }
     }
 
     @PostMapping(path = "/register")
     public ResponseEntity<?> register(@RequestBody RegisterDTO registerDTO) {
         User user = authenticationService.register(registerDTO);
         if (user != null) {
-            return ResponseEntity.status(201).build();
+            HttpHeaders headers = new HttpHeaders();
+            headers.setBasicAuth(user.getEmail(), user.getPassword());
+            return ResponseEntity.status(201).headers(headers).build();
         } else {
             return ResponseEntity.status(400).build();
         }
