@@ -7,6 +7,8 @@ import org.springframework.web.multipart.MultipartFile;
 import ru.skypro.homework.dto.*;
 import ru.skypro.homework.service.impl.AdsServiceImpl;
 
+import javax.validation.Valid;
+
 @CrossOrigin(value = "http://localhost:3000")
 @RestController
 @RequestMapping(path = "/ads")
@@ -22,8 +24,8 @@ public class AdsController {
         return ResponseEntity.ok().body(adsService.getAll());
     }
 
-    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<AdDTO> postAd(@RequestParam CreateOrUpdateAdDTO ad, @RequestBody MultipartFile image) {
+    @PostMapping(consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
+    public ResponseEntity<AdDTO> postAd(@RequestPart("properties") @Valid CreateOrUpdateAdDTO ad, @RequestPart("image") MultipartFile image) {
         return ResponseEntity.status(201).body(adsService.addAd(ad, image));
     }
 

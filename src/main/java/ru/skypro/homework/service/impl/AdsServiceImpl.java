@@ -65,13 +65,17 @@ public class AdsServiceImpl implements AdsService {
         if (user == null) {
             return null;
         }
-        Ad ad;
+        Ad ad = null;
         Ad newAd = adMapper.createOrUpdateAdDtoToAd(adDTO);
         try {
             ad = adRepository.findByAuthorAndTitleAndPriceAndDescription(user.getId(), newAd.getTitle(), newAd.getPrice(), newAd.getDescription());
         } catch (NoSuchElementException e) {
+            log.error((e.getMessage()));
+        }
+        if (ad == null) {
             ad = newAd;
         }
+        ad.setAuthor(user);
         Path filePath = null;
         try {
             filePath = Path.of(imageDir, "user_" + user.getId() + "_ad_" + ad.getPk() + "." + getExtension(image.getOriginalFilename()));
