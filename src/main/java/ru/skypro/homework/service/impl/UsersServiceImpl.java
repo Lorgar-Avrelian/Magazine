@@ -116,7 +116,7 @@ public class UsersServiceImpl implements UsersService {
             } catch (IOException e) {
                 log.error(e.getMessage());
             }
-            user.setImage(filePath.toString());
+            user.setImage(String.valueOf(filePath));
             userRepository.save(user);
         }
     }

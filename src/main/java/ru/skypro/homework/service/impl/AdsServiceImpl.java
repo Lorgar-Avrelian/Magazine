@@ -68,7 +68,7 @@ public class AdsServiceImpl implements AdsService {
         Ad ad;
         Ad newAd = adMapper.createOrUpdateAdDtoToAd(adDTO);
         try {
-            ad = adRepository.findByAuthorAndTitleAndPriceAndDescription(user.getId(), newAd.getTitle(), newAd.getPrice(), newAd.getDescription());
+            ad = adRepository.findByAuthorIdAndTitleAndPriceAndDescription(user.getId(), newAd.getTitle(), newAd.getPrice(), newAd.getDescription());
         } catch (NoSuchElementException e) {
             ad = newAd;
         }
@@ -90,7 +90,7 @@ public class AdsServiceImpl implements AdsService {
         } catch (IOException e) {
             log.error(e.getMessage());
         }
-        ad.setImage(filePath.toString());
+        ad.setImage(String.valueOf(filePath));
         ad = adRepository.save(ad);
         if (ad != null) {
             return adMapper.adToAdDto(ad);
@@ -116,18 +116,21 @@ public class AdsServiceImpl implements AdsService {
 
     @Override
     public boolean deleteAd(Integer pk) {
+        Ad ad = getThatAd(pk);
         User user = getUser();
+        if (ad != null) {
+            user = userCheck(user, ad);
+        } else {
+            return false;
+        }
         if (user == null) {
             return false;
         }
-        Ad ad = getThatAd(pk);
-        if (ad != null) {
-            try {
-                adRepository.delete(ad);
-            } catch (Exception e) {
-                log.error(e.getMessage());
-                return false;
-            }
+        try {
+            adRepository.delete(ad);
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            return false;
         }
         return true;
     }
@@ -155,7 +158,7 @@ public class AdsServiceImpl implements AdsService {
         }
         List<Ad> adsList;
         try {
-            adsList = adRepository.findByAuthor(user.getId());
+            adsList = adRepository.findByPk(user.getId());
         } catch (Exception e) {
             log.error(e.getMessage());
             return null;
@@ -209,11 +212,18 @@ public class AdsServiceImpl implements AdsService {
 
     @Override
     public boolean deleteComment(Integer adPk, Integer commentPk) {
+        User user = getUser();
         Ad ad = getThatAd(adPk);
         if (ad == null) {
             return false;
         }
         Comment comment = getComment(commentPk);
+        if (comment != null) {
+            user = userCheck(user, comment);
+        }
+        if (user == null) {
+            return false;
+        }
         if (comment != null) {
             commentRepository.delete(comment);
             return true;
@@ -252,6 +262,7 @@ public class AdsServiceImpl implements AdsService {
         Ad ad;
         try {
             ad = adRepository.findById(pk).get();
+            System.out.println(ad);
         } catch (NoSuchElementException e) {
             log.error(e.getMessage());
             return null;
@@ -268,5 +279,21 @@ public class AdsServiceImpl implements AdsService {
             return null;
         }
         return comment;
+    }
+
+    private User userCheck(User user, Ad ad) {
+        if (user.getRole().equals(Role.USER) && ad.getAuthor().equals(user) || user.getRole().equals(Role.ADMIN)) {
+            return user;
+        } else {
+            return null;
+        }
+    }
+
+    private User userCheck(User user, Comment comment) {
+        if (user.getRole().equals(Role.USER) && comment.getAuthor().equals(user) || user.getRole().equals(Role.ADMIN)) {
+            return user;
+        } else {
+            return null;
+        }
     }
 }
