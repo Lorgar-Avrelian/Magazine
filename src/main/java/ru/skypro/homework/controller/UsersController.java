@@ -21,8 +21,8 @@ public class UsersController {
 
     @PostMapping(path = "/set_password")
     public ResponseEntity<?> setPassword(@RequestBody NewPasswordDTO newPassword) {
-            usersService.setPassword(newPassword);
-            return ResponseEntity.ok().build();
+        usersService.setPassword(newPassword);
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping(path = "/me")

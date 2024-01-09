@@ -23,11 +23,6 @@ public interface AdMapper {
         return adDto;
     }
 
-    default Ad adDtoToAd(AdDTO adDto, User author) {
-        Ad ad = new Ad(adDto.getPk(), author, adDto.getImage(), adDto.getPrice(), adDto.getTitle(), null);
-        return ad;
-    }
-
     default AdsDTO adsListToAdsDto(List<Ad> adsList) {
         AdsDTO ads = new AdsDTO();
         ads.setCount(adsList.size());

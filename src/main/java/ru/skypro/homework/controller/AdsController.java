@@ -63,8 +63,8 @@ public class AdsController {
         return ResponseEntity.ok(adsService.getAllMine());
     }
 
-    @PatchMapping(path = "/{id}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<String> getAdImage(@PathVariable Integer id, @RequestBody MultipartFile image) {
+    @PatchMapping(path = "/{id}/image", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
+    public ResponseEntity<String> getAdImage(@RequestPart @Valid Integer id, @RequestBody MultipartFile image) {
         String imageUrl = adsService.updateAdImage(id, image);
         if (imageUrl != null) {
             return ResponseEntity.ok(imageUrl);
