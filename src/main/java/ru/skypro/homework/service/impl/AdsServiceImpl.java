@@ -72,6 +72,7 @@ public class AdsServiceImpl implements AdsService {
         } catch (NoSuchElementException e) {
             ad = newAd;
         }
+        ad.setAuthor(user);
         Path filePath = null;
         try {
             filePath = Path.of(imageDir, "user_" + user.getId() + "_ad_" + ad.getPk() + "." + getExtension(image.getOriginalFilename()));
