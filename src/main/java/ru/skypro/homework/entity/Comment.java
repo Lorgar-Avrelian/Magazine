@@ -19,19 +19,20 @@ public class Comment {
     private String authorFirstName;
     private long createdAt;
     private String text;
-    private Integer adPk;
+    @ManyToOne(fetch = FetchType.EAGER)
+    private Ad ad;
 
     public Comment() {
     }
 
-    public Comment(Integer pk, User author, String authorImage, String authorFirstName, long createdAt, String text, Integer adPk) {
+    public Comment(Integer pk, User author, String authorImage, String authorFirstName, long createdAt, String text, Ad ad) {
         this.pk = pk;
         this.author = author;
         this.authorImage = authorImage;
         this.authorFirstName = authorFirstName;
         this.createdAt = createdAt;
         this.text = text;
-        this.adPk = adPk;
+        this.ad = ad;
     }
 
     public Integer getPk() {
@@ -42,7 +43,6 @@ public class Comment {
         this.pk = pk;
     }
 
-    @JsonBackReference
     public User getAuthor() {
         return author;
     }
@@ -83,12 +83,12 @@ public class Comment {
         this.text = text;
     }
 
-    public Integer getAdPk() {
-        return adPk;
+    public Ad getAd() {
+        return ad;
     }
 
-    public void setAdPk(Integer adPk) {
-        this.adPk = adPk;
+    public void setAd(Ad ad) {
+        this.ad = ad;
     }
 
     @Override
@@ -96,12 +96,12 @@ public class Comment {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Comment comment = (Comment) o;
-        return createdAt == comment.createdAt && Objects.equals(pk, comment.pk) && Objects.equals(author, comment.author) && Objects.equals(authorImage, comment.authorImage) && Objects.equals(authorFirstName, comment.authorFirstName) && Objects.equals(text, comment.text) && Objects.equals(adPk, comment.adPk);
+        return createdAt == comment.createdAt && Objects.equals(pk, comment.pk) && Objects.equals(author, comment.author) && Objects.equals(authorImage, comment.authorImage) && Objects.equals(authorFirstName, comment.authorFirstName) && Objects.equals(text, comment.text) && Objects.equals(ad, comment.ad);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(pk, author, authorImage, authorFirstName, createdAt, text, adPk);
+        return Objects.hash(pk, author, authorImage, authorFirstName, createdAt, text, ad);
     }
 
     @Override
@@ -113,7 +113,7 @@ public class Comment {
                 ", authorFirstName='" + authorFirstName + '\'' +
                 ", createdAt=" + createdAt +
                 ", text='" + text + '\'' +
-                ", adPk=" + adPk +
+                ", ad=" + ad +
                 '}';
     }
 }

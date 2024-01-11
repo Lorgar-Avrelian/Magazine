@@ -14,6 +14,7 @@ import ru.skypro.homework.mapper.UserMapper;
 import ru.skypro.homework.repository.UserRepository;
 import ru.skypro.homework.service.UsersService;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.transaction.Transactional;
 import java.io.*;
 import java.nio.file.Files;
@@ -127,5 +128,28 @@ public class UsersServiceImpl implements UsersService {
 
     private String getExtension(String filename) {
         return filename.substring(filename.lastIndexOf(".") + 1);
+    }
+
+    @Override
+    public void getImage(Integer id, HttpServletResponse response) {
+        User user = null;
+        try {
+            user = userRepository.findById(id).get();
+        } catch (NoSuchElementException e) {
+            log.error(e.getMessage());
+        }
+        if (user != null) {
+            Path imagePath = Path.of(user.getImage());
+            try (
+                    InputStream is = Files.newInputStream(imagePath);
+                    OutputStream os = response.getOutputStream()
+            ) {
+                response.setContentType(Files.probeContentType(imagePath));
+                response.setContentLength((int) Files.size(imagePath));
+                is.transferTo(os);
+            } catch (IOException e) {
+                log.error(e.getMessage());
+            }
+        }
     }
 }

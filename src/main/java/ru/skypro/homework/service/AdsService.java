@@ -3,6 +3,8 @@ package ru.skypro.homework.service;
 import org.springframework.web.multipart.MultipartFile;
 import ru.skypro.homework.dto.*;
 
+import javax.servlet.http.HttpServletResponse;
+
 public interface AdsService {
     AdsDTO getAll();
 
@@ -25,4 +27,6 @@ public interface AdsService {
     boolean deleteComment(Integer adPk, Integer commentPk);
 
     CommentDTO updateComment(Integer adPk, Integer commentPk, CreateOrUpdateCommentDTO createOrUpdateCommentDTO);
+
+    void getImage(Integer id, HttpServletResponse response);
 }

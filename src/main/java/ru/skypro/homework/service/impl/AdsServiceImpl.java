@@ -2,7 +2,6 @@ package ru.skypro.homework.service.impl;
 
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -17,6 +16,7 @@ import ru.skypro.homework.repository.CommentRepository;
 import ru.skypro.homework.repository.UserRepository;
 import ru.skypro.homework.service.AdsService;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.transaction.Transactional;
 import java.io.*;
 import java.nio.file.Files;
@@ -56,7 +56,11 @@ public class AdsServiceImpl implements AdsService {
             log.error(e.getMessage());
             return null;
         }
-        return adMapper.adsListToAdsDto(adsList);
+        if (!adsList.isEmpty()) {
+            return adMapper.adsListToAdsDto(adsList);
+        } else {
+            return null;
+        }
     }
 
     @Override
@@ -65,14 +69,9 @@ public class AdsServiceImpl implements AdsService {
         if (user == null) {
             return null;
         }
-        Ad ad;
-        Ad newAd = adMapper.createOrUpdateAdDtoToAd(adDTO);
-        try {
-            ad = adRepository.findByAuthorIdAndTitleAndPriceAndDescription(user.getId(), newAd.getTitle(), newAd.getPrice(), newAd.getDescription());
-        } catch (NoSuchElementException e) {
-            ad = newAd;
-        }
+        Ad ad = adMapper.createOrUpdateAdDtoToAd(adDTO);
         ad.setAuthor(user);
+        ad = adRepository.save(ad);
         Path filePath = null;
         try {
             filePath = Path.of(imageDir, "user_" + user.getId() + "_ad_" + ad.getPk() + "." + getExtension(image.getOriginalFilename()));
@@ -93,16 +92,11 @@ public class AdsServiceImpl implements AdsService {
         }
         ad.setImage(String.valueOf(filePath));
         ad = adRepository.save(ad);
-        if (ad != null) {
-            return adMapper.adToAdDto(ad);
-        } else {
-            return null;
-        }
+        return adMapper.adToAdDto(ad);
     }
 
     private String getCurrentUsername() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        return auth.getName();
+        return SecurityContextHolder.getContext().getAuthentication().getName();
     }
 
     private String getExtension(String filename) {
@@ -111,15 +105,24 @@ public class AdsServiceImpl implements AdsService {
 
     @Override
     public ExtendedAdDTO getAd(Integer pk) {
-        Ad ad = adRepository.findById(pk).get();
-        return adMapper.adToExtendedAd(ad, ad.getAuthor());
+        Ad ad = null;
+        try {
+            ad = adRepository.findByPk(pk).get();
+        } catch (NoSuchElementException e) {
+            log.error(e.getMessage());
+        }
+        if (ad != null) {
+            return adMapper.adToExtendedAd(ad, ad.getAuthor());
+        } else {
+            return null;
+        }
     }
 
     @Override
     public boolean deleteAd(Integer pk) {
-        Ad ad = getThatAd(pk);
         User user = getUser();
-        if (ad != null) {
+        Ad ad = getThatAd(pk);
+        if (user != null && ad != null) {
             user = userCheck(user, ad);
         } else {
             return false;
@@ -129,7 +132,7 @@ public class AdsServiceImpl implements AdsService {
         }
         try {
             adRepository.delete(ad);
-        } catch (Exception e) {
+        } catch (NoSuchElementException e) {
             log.error(e.getMessage());
             return false;
         }
@@ -138,13 +141,14 @@ public class AdsServiceImpl implements AdsService {
 
     @Override
     public AdDTO updateAd(Integer pk, CreateOrUpdateAdDTO createOrUpdateAdDTO) {
+        User user = getUser();
         Ad adUpdate = adMapper.createOrUpdateAdDtoToAd(createOrUpdateAdDTO);
         Ad ad = getThatAd(pk);
-        if (ad != null) {
+        if (ad != null && ad.getAuthor().equals(user)) {
             ad.setTitle(adUpdate.getTitle());
             ad.setPrice(adUpdate.getPrice());
             ad.setDescription(adUpdate.getDescription());
-            adRepository.save(ad);
+            ad = adRepository.save(ad);
         } else {
             return null;
         }
@@ -159,7 +163,7 @@ public class AdsServiceImpl implements AdsService {
         }
         List<Ad> adsList;
         try {
-            adsList = adRepository.findByPk(user.getId());
+            adsList = adRepository.findByAuthor(user);
         } catch (Exception e) {
             log.error(e.getMessage());
             return null;
@@ -169,14 +173,30 @@ public class AdsServiceImpl implements AdsService {
 
     @Override
     public String updateAdImage(Integer pk, MultipartFile image) {
+        User user = getUser();
         Ad ad = getThatAd(pk);
-        AdDTO adDTO = null;
-        if (ad != null) {
-            CreateOrUpdateAdDTO createOrUpdateAdDTO = adMapper.adToCreateOrUpdateDto(ad);
-            adDTO = addAd(createOrUpdateAdDTO, image);
-        }
-        if (adDTO != null) {
-            return adDTO.getImage();
+        if (ad != null && ad.getAuthor().equals(user)) {
+            Path filePath = null;
+            try {
+                filePath = Path.of(imageDir, "user_" + user.getId() + "_ad_" + ad.getPk() + "." + getExtension(image.getOriginalFilename()));
+                Files.createDirectories(filePath.getParent());
+                Files.deleteIfExists(filePath);
+            } catch (IOException e) {
+                log.error(e.getMessage());
+            }
+            try (
+                    InputStream is = image.getInputStream();
+                    OutputStream os = Files.newOutputStream(filePath, CREATE_NEW);
+                    BufferedInputStream bis = new BufferedInputStream(is, 1024);
+                    BufferedOutputStream bos = new BufferedOutputStream(os, 1024)
+            ) {
+                bis.transferTo(bos);
+            } catch (IOException e) {
+                log.error(e.getMessage());
+            }
+            ad.setImage(String.valueOf(filePath));
+            adRepository.save(ad);
+            return String.valueOf(filePath);
         } else {
             return null;
         }
@@ -188,7 +208,7 @@ public class AdsServiceImpl implements AdsService {
         if (ad == null) {
             return null;
         }
-        List<Comment> commentsList = commentRepository.findByAdPk(pk);
+        List<Comment> commentsList = commentRepository.findByAd(ad);
         if (commentsList.isEmpty()) {
             return null;
         } else {
@@ -199,14 +219,11 @@ public class AdsServiceImpl implements AdsService {
     @Override
     public CommentDTO addComment(Integer pk, CreateOrUpdateCommentDTO createOrUpdateCommentDTO) {
         User user = getUser();
-        if (user == null) {
-            return null;
-        }
         Ad ad = getThatAd(pk);
-        if (ad == null) {
+        if (user == null || ad == null) {
             return null;
         }
-        Comment comment = new Comment(null, user, user.getImage(), user.getFirstName(), new Date().getTime(), createOrUpdateCommentDTO.getText(), pk);
+        Comment comment = new Comment(null, user, user.getImage(), user.getFirstName(), new Date().getTime(), createOrUpdateCommentDTO.getText(), ad);
         comment = commentRepository.save(comment);
         return commentMapper.commentToCommentDto(comment);
     }
@@ -215,35 +232,43 @@ public class AdsServiceImpl implements AdsService {
     public boolean deleteComment(Integer adPk, Integer commentPk) {
         User user = getUser();
         Ad ad = getThatAd(adPk);
-        if (ad == null) {
+        if (user == null || ad == null) {
             return false;
         }
         Comment comment = getComment(commentPk);
         if (comment != null) {
             user = userCheck(user, comment);
+        } else {
+            return false;
         }
         if (user == null) {
             return false;
         }
-        if (comment != null) {
-            commentRepository.delete(comment);
-            return true;
-        } else {
-            return false;
-        }
+        commentRepository.delete(comment);
+        return true;
     }
 
     @Override
     public CommentDTO updateComment(Integer adPk, Integer commentPk, CreateOrUpdateCommentDTO createOrUpdateCommentDTO) {
+        User user = getUser();
         Ad ad = getThatAd(adPk);
-        if (ad == null) {
+        if (user == null || ad == null) {
             return null;
         }
-        Comment comment = getComment(commentPk);
-        if (comment != null) {
-            comment.setText(createOrUpdateCommentDTO.getText());
+        Comment comment = null;
+        try {
+            comment = commentRepository.findByPk(commentPk).get();
+        } catch (NoSuchElementException e) {
+            log.error(e.getMessage());
+        }
+        if (comment == null) {
+            comment = new Comment(commentPk, user, user.getImage(), user.getFirstName(), new Date().getTime(), createOrUpdateCommentDTO.getText(), ad);
         } else {
-            return null;
+            user = userCheck(user, comment);
+            if (user == null) {
+                return null;
+            }
+            comment.setText(createOrUpdateCommentDTO.getText());
         }
         comment = commentRepository.save(comment);
         return commentMapper.commentToCommentDto(comment);
@@ -262,8 +287,7 @@ public class AdsServiceImpl implements AdsService {
     private Ad getThatAd(Integer pk) {
         Ad ad;
         try {
-            ad = adRepository.findById(pk).get();
-            System.out.println(ad);
+            ad = adRepository.findByPk(pk).get();
         } catch (NoSuchElementException e) {
             log.error(e.getMessage());
             return null;
@@ -274,7 +298,7 @@ public class AdsServiceImpl implements AdsService {
     private Comment getComment(Integer pk) {
         Comment comment;
         try {
-            comment = commentRepository.findById(pk).get();
+            comment = commentRepository.findByPk(pk).get();
         } catch (NoSuchElementException e) {
             log.error(e.getMessage());
             return null;
@@ -295,6 +319,28 @@ public class AdsServiceImpl implements AdsService {
             return user;
         } else {
             return null;
+        }
+    }
+    @Override
+    public void getImage(Integer id, HttpServletResponse response) {
+        Ad ad = null;
+        try {
+            ad = adRepository.findByPk(id).get();
+        } catch (NoSuchElementException e) {
+            log.error(e.getMessage());
+        }
+        if (ad != null) {
+            Path imagePath = Path.of(ad.getImage());
+            try (
+                    InputStream is = Files.newInputStream(imagePath);
+                    OutputStream os = response.getOutputStream()
+            ) {
+                response.setContentType(Files.probeContentType(imagePath));
+                response.setContentLength((int) Files.size(imagePath));
+                is.transferTo(os);
+            } catch (IOException e) {
+                log.error(e.getMessage());
+            }
         }
     }
 }

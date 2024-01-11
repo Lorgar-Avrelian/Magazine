@@ -35,9 +35,8 @@ CREATE TABLE comment (
 	author_first_name VARCHAR(255) NULL,
 	created_at BIGINT NULL,
 	text TEXT NULL,
-	users_id INTEGER NULL,
 	ad_pk INTEGER NOT NULL,
 	PRIMARY KEY (pk),
-	FOREIGN KEY (users_id) REFERENCES users(id),
+	FOREIGN KEY (author_id) REFERENCES users(id),
 	FOREIGN KEY (ad_pk) REFERENCES ad(pk)
 );

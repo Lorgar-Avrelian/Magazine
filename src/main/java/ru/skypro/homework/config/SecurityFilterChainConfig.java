@@ -17,7 +17,7 @@ import ru.skypro.homework.service.impl.AuthenticationServiceImpl;
 import static org.springframework.security.config.Customizer.withDefaults;
 
 @EnableWebSecurity
-@EnableGlobalMethodSecurity(securedEnabled = true)
+@EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true)
 public class SecurityFilterChainConfig {
     private final AuthenticationServiceImpl authenticationService;
     private final PasswordEncoderConfiguration encoderConfiguration;
