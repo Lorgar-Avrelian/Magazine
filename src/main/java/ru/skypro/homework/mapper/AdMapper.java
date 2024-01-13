@@ -31,7 +31,7 @@ public interface AdMapper {
             AdDTO adDto = adToAdDto(ad);
             adsDtoList.add(adDto);
         }
-        ads.setResult(adsDtoList);
+        ads.setResults(adsDtoList);
         return ads;
     }
 

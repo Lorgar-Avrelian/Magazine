@@ -5,7 +5,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
-import ru.skypro.homework.config.PasswordEncoderConfiguration;
+import ru.skypro.homework.config.PasswordEncoderConfig;
 import ru.skypro.homework.dto.LoginDTO;
 import ru.skypro.homework.dto.RegisterDTO;
 import ru.skypro.homework.entity.User;
@@ -21,9 +21,9 @@ import java.util.stream.Stream;
 public class AuthenticationServiceImpl implements AuthenticationService, UserDetailsService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
-    private final PasswordEncoderConfiguration encoderConfiguration;
+    private final PasswordEncoderConfig encoderConfiguration;
 
-    public AuthenticationServiceImpl(UserRepository userRepository, UserMapper userMapper, PasswordEncoderConfiguration encoderConfiguration) {
+    public AuthenticationServiceImpl(UserRepository userRepository, UserMapper userMapper, PasswordEncoderConfig encoderConfiguration) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
         this.encoderConfiguration = encoderConfiguration;

@@ -16,14 +16,17 @@ import ru.skypro.homework.service.impl.AuthenticationServiceImpl;
 
 import static org.springframework.security.config.Customizer.withDefaults;
 
+/**
+ * Spring Security main configuration class. <br>
+ */
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true)
 public class SecurityFilterChainConfig {
     private final AuthenticationServiceImpl authenticationService;
-    private final PasswordEncoderConfiguration encoderConfiguration;
+    private final PasswordEncoderConfig encoderConfiguration;
     private final BasicAuthCorsFilter basicAuthCorsFilter;
 
-    public SecurityFilterChainConfig(AuthenticationServiceImpl authenticationService, PasswordEncoderConfiguration encoderConfiguration, BasicAuthCorsFilter basicAuthCorsFilter) {
+    public SecurityFilterChainConfig(AuthenticationServiceImpl authenticationService, PasswordEncoderConfig encoderConfiguration, BasicAuthCorsFilter basicAuthCorsFilter) {
         this.authenticationService = authenticationService;
         this.encoderConfiguration = encoderConfiguration;
         this.basicAuthCorsFilter = basicAuthCorsFilter;
@@ -49,7 +52,7 @@ public class SecurityFilterChainConfig {
             .authorizeRequests(
                     authorization ->
                             authorization
-                                    .mvcMatchers("/ads", "/login", "/register", "/swagger-resources/**", "/swagger-ui.html", "/v3/api-docs", "/webjars/**")
+                                    .mvcMatchers("/", "/ads", "/login", "/register", "/swagger-resources/**", "/swagger-ui.html", "/v3/api-docs", "/webjars/**")
                                     .permitAll()
                                     .mvcMatchers("/ads/**", "/users/**")
                                     .authenticated())

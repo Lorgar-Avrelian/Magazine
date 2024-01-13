@@ -15,6 +15,4 @@ public interface UsersService {
     UpdateUserDTO updateUser(UpdateUserDTO updateUserDto);
 
     void setImage(MultipartFile image);
-
-    void getImage(Integer id, HttpServletResponse response);
 }

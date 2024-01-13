@@ -4,7 +4,7 @@ import java.util.List;
 
 public class CommentsDTO {
     private int count;
-    private List<CommentDTO> result;
+    private List<CommentDTO> results;
 
     public int getCount() {
         return count;
@@ -14,11 +14,11 @@ public class CommentsDTO {
         this.count = count;
     }
 
-    public List<CommentDTO> getResult() {
-        return result;
+    public List<CommentDTO> getResults() {
+        return results;
     }
 
-    public void setResult(List<CommentDTO> result) {
-        this.result = result;
+    public void setResults(List<CommentDTO> results) {
+        this.results = results;
     }
 }

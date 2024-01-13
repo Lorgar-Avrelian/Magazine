@@ -7,7 +7,6 @@ import org.springframework.web.multipart.MultipartFile;
 import ru.skypro.homework.dto.*;
 import ru.skypro.homework.service.impl.AdsServiceImpl;
 
-import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
 @CrossOrigin(value = "http://localhost:3000")
@@ -111,9 +110,5 @@ public class AdsController {
         } else {
             return ResponseEntity.status(404).build();
         }
-    }
-    @GetMapping(path = "/images/{id}")
-    public void downloadImage(@PathVariable Integer id, HttpServletResponse response) {
-        adsService.getImage(id, response);
     }
 }

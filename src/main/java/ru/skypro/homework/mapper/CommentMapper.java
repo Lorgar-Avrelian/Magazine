@@ -29,7 +29,7 @@ public interface CommentMapper {
             CommentDTO commentDto = commentToCommentDto(comment);
             commentDTODtoList.add(commentDto);
         }
-        comments.setResult(commentDTODtoList);
+        comments.setResults(commentDTODtoList);
         return comments;
     }
 }

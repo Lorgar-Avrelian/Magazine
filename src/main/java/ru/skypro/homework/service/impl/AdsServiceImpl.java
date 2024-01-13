@@ -73,8 +73,9 @@ public class AdsServiceImpl implements AdsService {
         ad.setAuthor(user);
         ad = adRepository.save(ad);
         Path filePath = null;
+        String fileName = "user_" + user.getId() + "_ad_" + ad.getPk() + "." + getExtension(image.getOriginalFilename());
         try {
-            filePath = Path.of(imageDir, "user_" + user.getId() + "_ad_" + ad.getPk() + "." + getExtension(image.getOriginalFilename()));
+            filePath = Path.of(imageDir, fileName);
             Files.createDirectories(filePath.getParent());
             Files.deleteIfExists(filePath);
         } catch (IOException e) {
@@ -90,7 +91,7 @@ public class AdsServiceImpl implements AdsService {
         } catch (IOException e) {
             log.error(e.getMessage());
         }
-        ad.setImage(String.valueOf(filePath));
+        ad.setImage(fileName);
         ad = adRepository.save(ad);
         return adMapper.adToAdDto(ad);
     }
@@ -177,8 +178,9 @@ public class AdsServiceImpl implements AdsService {
         Ad ad = getThatAd(pk);
         if (ad != null && ad.getAuthor().equals(user)) {
             Path filePath = null;
+            String fileName = "user_" + user.getId() + "_ad_" + ad.getPk() + "." + getExtension(image.getOriginalFilename());
             try {
-                filePath = Path.of(imageDir, "user_" + user.getId() + "_ad_" + ad.getPk() + "." + getExtension(image.getOriginalFilename()));
+                filePath = Path.of(imageDir, fileName);
                 Files.createDirectories(filePath.getParent());
                 Files.deleteIfExists(filePath);
             } catch (IOException e) {
@@ -194,7 +196,7 @@ public class AdsServiceImpl implements AdsService {
             } catch (IOException e) {
                 log.error(e.getMessage());
             }
-            ad.setImage(String.valueOf(filePath));
+            ad.setImage(fileName);
             adRepository.save(ad);
             return String.valueOf(filePath);
         } else {
@@ -319,28 +321,6 @@ public class AdsServiceImpl implements AdsService {
             return user;
         } else {
             return null;
-        }
-    }
-    @Override
-    public void getImage(Integer id, HttpServletResponse response) {
-        Ad ad = null;
-        try {
-            ad = adRepository.findByPk(id).get();
-        } catch (NoSuchElementException e) {
-            log.error(e.getMessage());
-        }
-        if (ad != null) {
-            Path imagePath = Path.of(ad.getImage());
-            try (
-                    InputStream is = Files.newInputStream(imagePath);
-                    OutputStream os = response.getOutputStream()
-            ) {
-                response.setContentType(Files.probeContentType(imagePath));
-                response.setContentLength((int) Files.size(imagePath));
-                is.transferTo(os);
-            } catch (IOException e) {
-                log.error(e.getMessage());
-            }
         }
     }
 }

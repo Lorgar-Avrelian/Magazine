@@ -4,7 +4,7 @@ import java.util.List;
 
 public class AdsDTO {
     private int count;
-    private List<AdDTO> result;
+    private List<AdDTO> results;
 
     public int getCount() {
         return count;
@@ -14,11 +14,11 @@ public class AdsDTO {
         this.count = count;
     }
 
-    public List<AdDTO> getResult() {
-        return result;
+    public List<AdDTO> getResults() {
+        return results;
     }
 
-    public void setResult(List<AdDTO> result) {
-        this.result = result;
+    public void setResults(List<AdDTO> results) {
+        this.results = results;
     }
 }

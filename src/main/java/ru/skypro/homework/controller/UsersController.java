@@ -9,8 +9,6 @@ import ru.skypro.homework.dto.UpdateUserDTO;
 import ru.skypro.homework.dto.UserDTO;
 import ru.skypro.homework.service.impl.UsersServiceImpl;
 
-import javax.servlet.http.HttpServletResponse;
-
 @CrossOrigin(value = "http://localhost:3000")
 @RestController
 @RequestMapping(path = "/users")
@@ -41,10 +39,5 @@ public class UsersController {
     public ResponseEntity<?> meImage(@RequestBody MultipartFile image) {
         usersService.setImage(image);
         return ResponseEntity.ok().build();
-    }
-
-    @GetMapping(path = "/images/{id}")
-    public void downloadImage(@PathVariable Integer id, HttpServletResponse response) {
-        usersService.getImage(id, response);
     }
 }

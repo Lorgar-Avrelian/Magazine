@@ -27,6 +27,4 @@ public interface AdsService {
     boolean deleteComment(Integer adPk, Integer commentPk);
 
     CommentDTO updateComment(Integer adPk, Integer commentPk, CreateOrUpdateCommentDTO createOrUpdateCommentDTO);
-
-    void getImage(Integer id, HttpServletResponse response);
 }
