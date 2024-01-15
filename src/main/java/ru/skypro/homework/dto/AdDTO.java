@@ -1,5 +1,22 @@
 package ru.skypro.homework.dto;
 
+/**
+ * DTO <br>
+ * <hr>
+ * <br>
+ * Ad { <br><br>
+ * author	integer($int32) <br>
+ * id автора объявления <br><br>
+ * image	string <br>
+ * ссылка на картинку объявления <br><br>
+ * pk	integer($int32) <br>
+ * id объявления <br><br>
+ * price	integer($int32) <br>
+ * цена объявления <br><br>
+ * title	string <br>
+ * заголовок объявления <br>
+ * }
+ */
 public class AdDTO {
     private int author;
     private String image;

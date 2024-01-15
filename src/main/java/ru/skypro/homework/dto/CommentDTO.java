@@ -1,5 +1,24 @@
 package ru.skypro.homework.dto;
 
+/**
+ * DTO <br>
+ * <hr>
+ * <br>
+ * Comment { <br><br>
+ * author	integer($int32) <br>
+ * id автора комментария <br><br>
+ * authorImage	string <br>
+ * ссылка на аватар автора комментария <br><br>
+ * authorFirstName	string <br>
+ * имя создателя комментария <br><br>
+ * createdAt	integer($int64) <br>
+ * дата и время создания комментария в миллисекундах с 00:00:00 01.01.1970 <br><br>
+ * pk	integer($int32) <br>
+ * id комментария <br><br>
+ * text	string <br>
+ * текст комментария <br>
+ * }
+ */
 public class CommentDTO {
     private int author;
     private String authorImage;

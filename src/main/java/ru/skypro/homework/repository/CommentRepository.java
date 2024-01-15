@@ -9,6 +9,16 @@ import ru.skypro.homework.entity.User;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * {@link JpaRepository} for storage DAO {@link Comment} and operating with it. <br>
+ * <br>
+ * <hr>
+ * <br>
+ * {@link JpaRepository} для хранения DAO {@link Comment} и работы с ней. <br>
+ * <br>
+ *
+ * @see JpaRepository
+ */
 @Repository
 public interface CommentRepository extends JpaRepository<Comment, Integer> {
     List<Comment> findByAdAuthor(User user);

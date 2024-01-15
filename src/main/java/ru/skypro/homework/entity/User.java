@@ -10,6 +10,31 @@ import java.util.Objects;
 
 import static javax.persistence.GenerationType.IDENTITY;
 
+/**
+ * DAO <br>
+ * <hr>
+ * <br>
+ * User { <br><br>
+ * Integer id <br>
+ * id пользователя <br><br>
+ * String email <br>
+ * логин пользователя <br><br>
+ * String firstName <br>
+ * имя пользователя <br><br>
+ * String lastName <br>
+ * фамилия пользователя <br><br>
+ * String phone <br>
+ * телефон пользователя <br><br>
+ * {@link Role} role <br>
+ * роль пользователя <br><br>
+ * String image <br>
+ * ссылка на аватар пользователя <br><br>
+ * String password <br>
+ * minLength: 8 <br>
+ * maxLength: 16 <br>
+ * текущий пароль <br>
+ * }
+ */
 @Entity
 @Table(name = "users")
 public class User {

@@ -1,5 +1,26 @@
 package ru.skypro.homework.dto;
 
+/**
+ * DTO <br>
+ * <hr>
+ * <br>
+ * User { <br><br>
+ * id	integer($int32) <br>
+ * id пользователя <br><br>
+ * email	string <br>
+ * логин пользователя <br><br>
+ * firstName	string <br>
+ * имя пользователя <br><br>
+ * lastName	string <br>
+ * фамилия пользователя <br><br>
+ * phone	string <br>
+ * телефон пользователя <br><br>
+ * {@link Role}	string <br>
+ * роль пользователя <br><br>
+ * image	string <br>
+ * ссылка на аватар пользователя <br>
+ * }
+ */
 public class UserDTO {
     private int id;
     private String email;

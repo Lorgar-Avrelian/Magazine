@@ -5,19 +5,29 @@ import org.apache.tika.Tika;
 import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.util.MimeType;
 import ru.skypro.homework.service.ImageService;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
+import java.lang.reflect.Array;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+/**
+ * An implementation of the service for processing ads and ad commits requests {@link ImageService}. <br>
+ * <br>
+ * <hr>
+ * <br>
+ * Реализация сервиса для обработки запросов объявлений и комментариев к объявлениям {@link ImageService}. <br>
+ * <br>
+ *
+ * @see ImageService
+ */
 @Service
 public class ImageServiceImpl implements ImageService {
     @Value("${user.image.dir.path}")
@@ -26,6 +36,20 @@ public class ImageServiceImpl implements ImageService {
     private String addsImageDir;
     private static final Logger log = Logger.getLogger(UsersServiceImpl.class);
 
+    /**
+     * A method of the service for getting {@link Array} of {@link Byte} with image of user or ad. <br>
+     * <br>
+     * <hr>
+     * <br>
+     * Метод сервиса для получения массива {@link Array} байтов {@link Byte} с изображением пользователя или объявления. <br>
+     * <br>
+     *
+     * @param imageName
+     * @param response
+     * @return {@link HttpStatus#OK} and {@link Array} of {@link Byte}
+     * @throws IOException
+     * @see ImageService#getImage(String, HttpServletResponse)
+     */
     @Override
     public ResponseEntity<byte[]> getImage(String imageName, HttpServletResponse response) throws IOException {
         Path imagePath = Path.of(userImageDir, imageName);

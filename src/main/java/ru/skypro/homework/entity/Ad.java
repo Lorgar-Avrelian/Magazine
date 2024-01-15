@@ -7,6 +7,25 @@ import java.util.Objects;
 
 import static javax.persistence.GenerationType.IDENTITY;
 
+/**
+ * DAO <br>
+ * <hr>
+ * <br>
+ * Ad { <br><br>
+ * Integer pk <br>
+ * id автора объявления <br><br>
+ * {@link User} author <br>
+ * автор объявления <br><br>
+ * String image <br>
+ * ссылка на картинку объявления <br><br>
+ * int price <br>
+ * цена объявления <br><br>
+ * String title <br>
+ * заголовок объявления <br><br>
+ * String description <br>
+ * описание объявления <br>
+ * }
+ */
 @Entity
 @Table(name = "ad")
 public class Ad {

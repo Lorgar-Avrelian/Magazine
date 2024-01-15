@@ -1,12 +1,31 @@
 package ru.skypro.homework.entity;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
-
 import javax.persistence.*;
 import java.util.Objects;
 
 import static javax.persistence.GenerationType.IDENTITY;
 
+/**
+ * DAO <br>
+ * <hr>
+ * <br>
+ * Comment { <br><br>
+ * Integer pk <br>
+ * id комментария <br><br>
+ * {@link User} author <br>
+ * автор комментария <br><br>
+ * String authorImage <br>
+ * ссылка на аватар автора комментария <br><br>
+ * String authorFirstName <br>
+ * имя создателя комментария <br><br>
+ * long createdAt <br>
+ * дата и время создания комментария в миллисекундах с 00:00:00 01.01.1970 <br><br>
+ * String text <br>
+ * текст комментария <br><br>
+ * {@link Ad} ad <br>
+ * объявление <br>
+ * }
+ */
 @Entity
 @Table(name = "comment")
 public class Comment {
