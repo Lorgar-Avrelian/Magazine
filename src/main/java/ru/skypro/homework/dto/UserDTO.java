@@ -1,5 +1,7 @@
 package ru.skypro.homework.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 /**
  * DTO <br>
  * <hr>
@@ -22,12 +24,19 @@ package ru.skypro.homework.dto;
  * }
  */
 public class UserDTO {
+    @Schema(example = "1", description = "id пользователя")
     private int id;
+    @Schema(example = "user@test.com", description = "логин автора объявления")
     private String email;
+    @Schema(example = "Иван", description = "имя пользователя", minLength = 2, maxLength = 16)
     private String firstName;
+    @Schema(example = "Иванов", description = "фамилия пользователя", minLength = 2, maxLength = 16)
     private String lastName;
+    @Schema(example = "+79998887766", description = "телефон пользователя", pattern = "\\+7\\s?\\(?\\d{3}\\)?\\s?\\d{3}-?\\d{2}-?\\d{2}")
     private String phone;
+    @Schema(description = "роль пользователя")
     private Role role;
+    @Schema(example = "/user_1.png", description = "ссылка на картинку объявления")
     private String image;
 
     public int getId() {

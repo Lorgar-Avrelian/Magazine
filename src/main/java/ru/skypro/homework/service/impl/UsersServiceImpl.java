@@ -203,7 +203,7 @@ public class UsersServiceImpl implements UsersService {
      *
      * @return {@link String} or null
      */
-    private String getCurrentUsername() {
+    public String getCurrentUsername() {
         return SecurityContextHolder.getContext().getAuthentication().getName();
     }
 

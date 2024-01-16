@@ -1,5 +1,7 @@
 package ru.skypro.homework.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 import java.util.List;
 
 /**
@@ -25,6 +27,7 @@ import java.util.List;
  * }
  */
 public class AdsDTO {
+    @Schema(example = "1", description = "общее количество объявлений")
     private int count;
     private List<AdDTO> results;
 

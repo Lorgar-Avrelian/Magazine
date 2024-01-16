@@ -1,5 +1,7 @@
 package ru.skypro.homework.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 /**
  * DTO <br>
  * <hr>
@@ -20,11 +22,17 @@ package ru.skypro.homework.dto;
  * }
  */
 public class CommentDTO {
+    @Schema(example = "1", description = "id автора комментария")
     private int author;
+    @Schema(example = "/user_1.png", description = "ссылка на аватар автора комментария")
     private String authorImage;
+    @Schema(example = "Username", description = "имя создателя комментария")
     private String authorFirstName;
+    @Schema(example = "100000000", description = "дата и время создания комментария в миллисекундах с 00:00:00 01.01.1970")
     private long createdAt;
+    @Schema(example = "1", description = "id комментария")
     private int pk;
+    @Schema(example = "Текст комментария", description = "текст комментария")
     private String text;
 
     public int getAuthor() {

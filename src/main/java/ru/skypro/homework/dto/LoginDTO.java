@@ -1,5 +1,7 @@
 package ru.skypro.homework.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 /**
  * DTO <br>
  * <hr>
@@ -16,7 +18,9 @@ package ru.skypro.homework.dto;
  * }
  */
 public class LoginDTO {
+    @Schema(example = "user@test.com", description = "логин", minLength = 4, maxLength = 32)
     private String username;
+    @Schema(example = "12345678", description = "пароль", minLength = 8, maxLength = 16)
     private String password;
 
     public String getUsername() {

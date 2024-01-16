@@ -1,5 +1,7 @@
 package ru.skypro.homework.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 /**
  * DTO <br>
  * <hr>
@@ -16,7 +18,9 @@ package ru.skypro.homework.dto;
  * }
  */
 public class NewPasswordDTO {
+    @Schema(example = "12345678", description = "текущий пароль", minLength = 8, maxLength = 16)
     private String currentPassword;
+    @Schema(example = "87654321", description = "новый пароль", minLength = 8, maxLength = 16)
     private String newPassword;
 
     public String getCurrentPassword() {

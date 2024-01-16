@@ -1,5 +1,10 @@
 package ru.skypro.homework.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.apache.log4j.Logger;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -49,8 +54,27 @@ public class ImageController {
      * @return {@link HttpStatus#UNAUTHORIZED} or {@link HttpStatus#OK} and {@link Array} of {@link Byte}
      * @see ImageService#getImage(String, HttpServletResponse)
      */
+    @Operation(
+            tags = "Изображения",
+            summary = "Получение изображения пользователя или объявления",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "OK"
+                    ),
+                    @ApiResponse(
+                            responseCode = "400",
+                            description = "Bad request",
+                            content = @Content(
+                                    schema = @Schema(
+                                            implementation = Void.class
+                                    )
+                            )
+                    )
+            }
+    )
     @GetMapping(path = "/{imageName}", produces = {MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE, MediaType.IMAGE_GIF_VALUE})
-    public ResponseEntity<byte[]> downloadImage(@PathVariable String imageName, HttpServletResponse response) {
+    public ResponseEntity<byte[]> downloadImage(@Parameter(description = "Ссылка на изображение в файловой системе", example = "user_1.png") @PathVariable String imageName, HttpServletResponse response) {
         try {
             return imageService.getImage(imageName, response);
         } catch (IOException e) {

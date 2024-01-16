@@ -1,5 +1,9 @@
 package ru.skypro.homework.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -43,6 +47,48 @@ public class UsersController {
      * @return {@link HttpStatus#OK}
      * @see UsersService#setPassword(NewPasswordDTO)
      */
+    @Operation(
+            tags = "Пользователи",
+            summary = "Обновление пароля",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(
+                                    implementation = NewPasswordDTO.class
+                            )
+                    ),
+                    required = true
+            ),
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "OK",
+                            content = @Content(
+                                    schema = @Schema(
+                                            implementation = Void.class
+                                    )
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "401",
+                            description = "Unauthorized",
+                            content = @Content(
+                                    schema = @Schema(
+                                            implementation = Void.class
+                                    )
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "403",
+                            description = "Forbidden",
+                            content = @Content(
+                                    schema = @Schema(
+                                            implementation = Void.class
+                                    )
+                            )
+                    )
+            }
+    )
     @PostMapping(path = "/set_password")
     public ResponseEntity<?> setPassword(@RequestBody NewPasswordDTO newPassword) {
         usersService.setPassword(newPassword);
@@ -62,6 +108,38 @@ public class UsersController {
      * @return {@link HttpStatus#OK} and {@link UserDTO}
      * @see UsersService#getUser()
      */
+    @Operation(
+            tags = "Пользователи",
+            summary = "Получение информации об авторизованном пользователе",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    content = @Content(
+                            schema = @Schema(
+                                    implementation = Void.class
+                            )
+                    )
+            ),
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "OK",
+                            content = @Content(
+                                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                    schema = @Schema(
+                                            implementation = UserDTO.class
+                                    )
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "401",
+                            description = "Unauthorized",
+                            content = @Content(
+                                    schema = @Schema(
+                                            implementation = Void.class
+                                    )
+                            )
+                    )
+            }
+    )
     @GetMapping(path = "/me")
     public ResponseEntity<UserDTO> me() {
         return ResponseEntity.ok().body(usersService.getUser());
@@ -81,6 +159,39 @@ public class UsersController {
      * @return {@link HttpStatus#OK} and {@link UpdateUserDTO}
      * @see UsersService#updateUser(UpdateUserDTO)
      */
+    @Operation(
+            tags = "Пользователи",
+            summary = "Обновление информации об авторизованном пользователе",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(
+                                    implementation = UpdateUserDTO.class
+                            )
+                    )
+            ),
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "OK",
+                            content = @Content(
+                                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                    schema = @Schema(
+                                            implementation = UpdateUserDTO.class
+                                    )
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "401",
+                            description = "Unauthorized",
+                            content = @Content(
+                                    schema = @Schema(
+                                            implementation = Void.class
+                                    )
+                            )
+                    )
+            }
+    )
     @PatchMapping(path = "/me")
     public ResponseEntity<UpdateUserDTO> meUpdate(@RequestBody UpdateUserDTO updateUser) {
         return ResponseEntity.ok().body(usersService.updateUser(updateUser));
@@ -100,6 +211,39 @@ public class UsersController {
      * @return {@link HttpStatus#OK}
      * @see UsersService#setImage(MultipartFile)
      */
+    @Operation(
+            tags = "Пользователи",
+            summary = "Обновление аватара авторизованного пользователя",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    content = @Content(
+                            mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
+                            schema = @Schema(
+                                    implementation = MultipartFile.class
+                            )
+                    ),
+                    required = true
+            ),
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "OK",
+                            content = @Content(
+                                    schema = @Schema(
+                                            implementation = Void.class
+                                    )
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "401",
+                            description = "Unauthorized",
+                            content = @Content(
+                                    schema = @Schema(
+                                            implementation = Void.class
+                                    )
+                            )
+                    )
+            }
+    )
     @PatchMapping(path = "/me/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> meImage(@RequestBody MultipartFile image) {
         usersService.setImage(image);

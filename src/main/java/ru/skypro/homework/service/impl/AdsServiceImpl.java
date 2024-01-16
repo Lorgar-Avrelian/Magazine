@@ -148,7 +148,7 @@ public class AdsServiceImpl implements AdsService {
      *
      * @return {@link String} or null
      */
-    private String getCurrentUsername() {
+    public String getCurrentUsername() {
         return SecurityContextHolder.getContext().getAuthentication().getName();
     }
 

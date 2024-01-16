@@ -1,5 +1,7 @@
 package ru.skypro.homework.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 /**
  * DTO <br>
  * <hr>
@@ -31,11 +33,17 @@ package ru.skypro.homework.dto;
  * }
  */
 public class RegisterDTO {
+    @Schema(example = "user@test.com", description = "логин", minLength = 4, maxLength = 32)
     private String username;
+    @Schema(example = "12345678", description = "пароль", minLength = 8, maxLength = 16)
     private String password;
+    @Schema(example = "Иван", description = "имя пользователя", minLength = 2, maxLength = 16)
     private String firstName;
+    @Schema(example = "Иванов", description = "фамилия пользователя", minLength = 2, maxLength = 16)
     private String lastName;
+    @Schema(example = "+79998887766", description = "телефон пользователя", pattern = "\\+7\\s?\\(?\\d{3}\\)?\\s?\\d{3}-?\\d{2}-?\\d{2}")
     private String phone;
+    @Schema(description = "роль пользователя")
     private Role role;
 
     public String getUsername() {

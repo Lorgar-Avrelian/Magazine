@@ -1,5 +1,7 @@
 package ru.skypro.homework.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 import java.util.List;
 
 /**
@@ -27,6 +29,7 @@ import java.util.List;
  * }
  */
 public class CommentsDTO {
+    @Schema(example = "1", description = "общее количество комментариев")
     private int count;
     private List<CommentDTO> results;
 

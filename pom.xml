@@ -18,7 +18,7 @@
     <description>Application for managing ads</description>
 
     <properties>
-        <java.version>20</java.version>
+        <java.version>17</java.version>
         <org.mapstruct.version>1.6.0.Beta1</org.mapstruct.version>
     </properties>
 

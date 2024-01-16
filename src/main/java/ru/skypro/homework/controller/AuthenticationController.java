@@ -1,12 +1,19 @@
 package ru.skypro.homework.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import org.springframework.data.jpa.repository.query.Procedure;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 import ru.skypro.homework.config.SecurityFilterChainConfig;
 import ru.skypro.homework.dto.LoginDTO;
 import ru.skypro.homework.dto.RegisterDTO;
@@ -70,6 +77,39 @@ public class AuthenticationController {
      * @see SecurityFilterChainConfig
      * @see AuthenticationService
      */
+    @Operation(
+            tags = "Авторизация",
+            summary = "Авторизация пользователя",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(
+                                    implementation = LoginDTO.class
+                            )
+                    ),
+                    required = true
+            ),
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "OK",
+                            content = @Content(
+                                    schema = @Schema(
+                                            implementation = Void.class
+                                    )
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "401",
+                            description = "Unauthorized",
+                            content = @Content(
+                                    schema = @Schema(
+                                            implementation = Void.class
+                                    )
+                            )
+                    )
+            }
+    )
     @PostMapping(path = "/login")
     public ResponseEntity<?> login(@RequestBody LoginDTO loginDTO) {
         User user = authenticationService.login(loginDTO);
@@ -99,6 +139,39 @@ public class AuthenticationController {
      * @see SecurityFilterChainConfig
      * @see AuthenticationService
      */
+    @Operation(
+            tags = "Регистрация",
+            summary = "Регистрация пользователя",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(
+                                    implementation = RegisterDTO.class
+                            )
+                    ),
+                    required = true
+            ),
+            responses = {
+                    @ApiResponse(
+                            responseCode = "201",
+                            description = "Created",
+                            content = @Content(
+                                    schema = @Schema(
+                                            implementation = Void.class
+                                    )
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "400",
+                            description = "Bad Request",
+                            content = @Content(
+                                    schema = @Schema(
+                                            implementation = Void.class
+                                    )
+                            )
+                    )
+            }
+    )
     @PostMapping(path = "/register")
     public ResponseEntity<?> register(@RequestBody RegisterDTO registerDTO) {
         User user = authenticationService.register(registerDTO);

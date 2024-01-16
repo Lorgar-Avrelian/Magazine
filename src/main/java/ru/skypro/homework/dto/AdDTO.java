@@ -1,5 +1,7 @@
 package ru.skypro.homework.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 /**
  * DTO <br>
  * <hr>
@@ -18,10 +20,15 @@ package ru.skypro.homework.dto;
  * }
  */
 public class AdDTO {
+    @Schema(example = "1", description = "id автора объявления")
     private int author;
+    @Schema(example = "/user_1_ad_1.png", description = "ссылка на картинку объявления")
     private String image;
+    @Schema(example = "1", description = "id объявления")
     private int pk;
+    @Schema(example = "1000", description = "цена объявления")
     private int price;
+    @Schema(example = "Новое объявление", description = "заголовок объявления")
     private String title;
 
     public int getAuthor() {
