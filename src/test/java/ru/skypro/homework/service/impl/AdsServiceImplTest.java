@@ -61,10 +61,6 @@ class AdsServiceImplTest {
     private UpdateUserDTO UPDATE_USER_DTO = new UpdateUserDTO();
     private UserDTO USER_DTO = new UserDTO();
     @Mock
-    Authentication authentication;
-    @Mock
-    SecurityContext securityContext;
-    @Mock
     AdRepository adRepository;
     @Mock
     CommentRepository commentRepository;
@@ -179,8 +175,6 @@ class AdsServiceImplTest {
         USER_DTO.setPhone(USER.getPhone());
         USER_DTO.setRole(USER.getRole());
         USER_DTO.setImage(USER.getImage());
-        lenient().when(securityContext.getAuthentication()).thenReturn(authentication);
-        SecurityContextHolder.setContext(securityContext);
         lenient().when(adRepository.findAll()).thenReturn(ADS);
         lenient().when(adMapper.adsListToAdsDto(ADS)).thenReturn(ADS_DTO);
         lenient().when(adRepository.findByPk(1)).thenReturn(Optional.of(AD_1));
@@ -190,7 +184,6 @@ class AdsServiceImplTest {
         lenient().when(adMapper.adToExtendedAd(AD_2, AD_2.getAuthor())).thenReturn(EXTENDED_AD_2_DTO);
         lenient().when(adMapper.adToExtendedAd(AD_3, AD_3.getAuthor())).thenReturn(EXTENDED_AD_3_DTO);
         lenient().when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(USER)).thenReturn(Optional.of(ADMIN)).thenReturn(Optional.of(USER));
-        lenient().when(adsService.getCurrentUsername()).thenReturn(USER.getEmail());
         lenient().doNothing().when(adRepository).delete(any(Ad.class));
         lenient().when(adMapper.createOrUpdateAdDtoToAd(CREATE_OR_UPDATE_AD_1_DTO)).thenReturn(AD_1);
         lenient().when(adMapper.createOrUpdateAdDtoToAd(CREATE_OR_UPDATE_AD_2_DTO)).thenReturn(AD_2);

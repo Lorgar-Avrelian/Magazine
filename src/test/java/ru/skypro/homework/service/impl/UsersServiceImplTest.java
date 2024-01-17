@@ -10,9 +10,12 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.security.test.context.support.WithSecurityContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import ru.skypro.homework.dto.NewPasswordDTO;
 import ru.skypro.homework.dto.UpdateUserDTO;
 import ru.skypro.homework.dto.UserDTO;
@@ -25,7 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 import static ru.skypro.homework.constants.Constants.USER;
 
-@ExtendWith(MockitoExtension.class)
+@ExtendWith({MockitoExtension.class, SpringExtension.class})
 @ContextConfiguration
 @ActiveProfiles("test")
 @TestPropertySource(locations = "classpath:application-test.properties")
@@ -33,10 +36,6 @@ class UsersServiceImplTest {
     private NewPasswordDTO NEW_PASSWORD_USER_DTO = new NewPasswordDTO();
     private UpdateUserDTO UPDATE_USER_DTO = new UpdateUserDTO();
     private UserDTO USER_DTO = new UserDTO();
-    @Mock
-    Authentication authentication;
-    @Mock
-    SecurityContext securityContext;
     @Mock
     PasswordEncoder passwordEncoder;
     @Mock
@@ -60,10 +59,7 @@ class UsersServiceImplTest {
         USER_DTO.setPhone(USER.getPhone());
         USER_DTO.setRole(USER.getRole());
         USER_DTO.setImage(USER.getImage());
-        lenient().when(securityContext.getAuthentication()).thenReturn(authentication);
-        SecurityContextHolder.setContext(securityContext);
         lenient().when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(USER));
-        lenient().when(usersService.getCurrentUsername()).thenReturn(USER.getEmail());
         lenient().when(passwordEncoder.encode(USER.getPassword())).thenReturn(USER.getPassword());
         lenient().when(userMapper.userToUserDto(USER)).thenReturn(USER_DTO);
         lenient().when(userMapper.updateUserDtoToUser(UPDATE_USER_DTO)).thenReturn(USER);
@@ -71,17 +67,20 @@ class UsersServiceImplTest {
     }
 
     @Test
+    @WithMockUser(value = "user@test.com")
     void setPassword() {
         usersService.setPassword(NEW_PASSWORD_USER_DTO);
         verify(userRepository, times(1)).save(USER);
     }
 
     @Test
+    @WithMockUser(value = "user@test.com")
     void getUser() {
         assertEquals(USER_DTO, usersService.getUser());
     }
 
     @Test
+    @WithMockUser(value = "user@test.com")
     void updateUser() {
         assertEquals(UPDATE_USER_DTO, usersService.updateUser(UPDATE_USER_DTO));
     }
