@@ -3,16 +3,13 @@ package ru.skypro.homework.service.impl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import ru.skypro.homework.dto.*;
 import ru.skypro.homework.entity.Ad;
 import ru.skypro.homework.entity.Comment;
@@ -31,7 +28,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.lenient;
 import static ru.skypro.homework.constants.Constants.*;
 
-@ExtendWith(MockitoExtension.class)
+@ExtendWith({MockitoExtension.class, SpringExtension.class})
 @ContextConfiguration
 @ActiveProfiles("test")
 @TestPropertySource(locations = "classpath:application-test.properties")
@@ -54,12 +51,6 @@ class AdsServiceImplTest {
     private ExtendedAdDTO EXTENDED_AD_1_DTO = new ExtendedAdDTO();
     private ExtendedAdDTO EXTENDED_AD_2_DTO = new ExtendedAdDTO();
     private ExtendedAdDTO EXTENDED_AD_3_DTO = new ExtendedAdDTO();
-    private LoginDTO LOGIN_USER_DTO = new LoginDTO();
-    private LoginDTO LOGIN_ADMIN_DTO = new LoginDTO();
-    private NewPasswordDTO NEW_PASSWORD_USER_DTO = new NewPasswordDTO();
-    private RegisterDTO REGISTER_USER_DTO = new RegisterDTO();
-    private UpdateUserDTO UPDATE_USER_DTO = new UpdateUserDTO();
-    private UserDTO USER_DTO = new UserDTO();
     @Mock
     AdRepository adRepository;
     @Mock
@@ -70,11 +61,11 @@ class AdsServiceImplTest {
     AdMapper adMapper;
     @Mock
     CommentMapper commentMapper;
-    @InjectMocks
     AdsServiceImpl adsService;
 
     @BeforeEach
     void setUp() {
+        adsService = new AdsServiceImpl(adRepository, commentRepository, userRepository, adMapper, commentMapper);
         AD_1_DTO.setAuthor(AD_1.getAuthor().getId());
         AD_1_DTO.setImage(AD_1.getImage());
         AD_1_DTO.setPk(AD_1.getPk());
@@ -153,28 +144,7 @@ class AdsServiceImplTest {
         EXTENDED_AD_3_DTO.setPhone(AD_3.getAuthor().getPhone());
         EXTENDED_AD_3_DTO.setPrice(AD_3.getPrice());
         EXTENDED_AD_3_DTO.setTitle(AD_3.getTitle());
-        LOGIN_USER_DTO.setUsername(USER.getEmail());
-        LOGIN_USER_DTO.setPassword(USER.getPassword());
-        LOGIN_ADMIN_DTO.setUsername(ADMIN.getEmail());
-        LOGIN_ADMIN_DTO.setPassword(ADMIN.getPassword());
-        NEW_PASSWORD_USER_DTO.setCurrentPassword(USER.getPassword());
-        NEW_PASSWORD_USER_DTO.setNewPassword(USER.getPassword());
-        REGISTER_USER_DTO.setUsername(USER.getEmail());
-        REGISTER_USER_DTO.setPassword(USER.getPassword());
-        REGISTER_USER_DTO.setFirstName(USER.getFirstName());
-        REGISTER_USER_DTO.setLastName(USER.getLastName());
-        REGISTER_USER_DTO.setPhone(USER.getPhone());
-        REGISTER_USER_DTO.setRole(USER.getRole());
-        UPDATE_USER_DTO.setFirstName(USER.getFirstName());
-        UPDATE_USER_DTO.setLastName(USER.getLastName());
-        UPDATE_USER_DTO.setPhone(USER.getPhone());
-        USER_DTO.setId(USER.getId());
-        USER_DTO.setEmail(USER.getEmail());
-        USER_DTO.setFirstName(USER.getFirstName());
-        USER_DTO.setLastName(USER.getLastName());
-        USER_DTO.setPhone(USER.getPhone());
-        USER_DTO.setRole(USER.getRole());
-        USER_DTO.setImage(USER.getImage());
+        lenient().when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(USER)).thenReturn(Optional.of(ADMIN)).thenReturn(Optional.of(USER));
         lenient().when(adRepository.findAll()).thenReturn(ADS);
         lenient().when(adMapper.adsListToAdsDto(ADS)).thenReturn(ADS_DTO);
         lenient().when(adRepository.findByPk(1)).thenReturn(Optional.of(AD_1));
@@ -183,7 +153,6 @@ class AdsServiceImplTest {
         lenient().when(adMapper.adToExtendedAd(AD_1, AD_1.getAuthor())).thenReturn(EXTENDED_AD_1_DTO);
         lenient().when(adMapper.adToExtendedAd(AD_2, AD_2.getAuthor())).thenReturn(EXTENDED_AD_2_DTO);
         lenient().when(adMapper.adToExtendedAd(AD_3, AD_3.getAuthor())).thenReturn(EXTENDED_AD_3_DTO);
-        lenient().when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(USER)).thenReturn(Optional.of(ADMIN)).thenReturn(Optional.of(USER));
         lenient().doNothing().when(adRepository).delete(any(Ad.class));
         lenient().when(adMapper.createOrUpdateAdDtoToAd(CREATE_OR_UPDATE_AD_1_DTO)).thenReturn(AD_1);
         lenient().when(adMapper.createOrUpdateAdDtoToAd(CREATE_OR_UPDATE_AD_2_DTO)).thenReturn(AD_2);
@@ -209,11 +178,13 @@ class AdsServiceImplTest {
     }
 
     @Test
+    @WithMockUser(value = "user@test.com")
     void getAll() {
         assertEquals(ADS_DTO, adsService.getAll());
     }
 
     @Test
+    @WithMockUser(value = "user@test.com")
     void getAd() {
         assertEquals(EXTENDED_AD_1_DTO, adsService.getAd(1));
         assertEquals(EXTENDED_AD_2_DTO, adsService.getAd(2));
@@ -221,6 +192,7 @@ class AdsServiceImplTest {
     }
 
     @Test
+    @WithMockUser(value = "user@test.com")
     void deleteAd() {
         assertTrue(adsService.deleteAd(1));
         assertTrue(adsService.deleteAd(2));
@@ -228,6 +200,7 @@ class AdsServiceImplTest {
     }
 
     @Test
+    @WithMockUser(value = "user@test.com")
     void updateAd() {
         assertEquals(AD_1_DTO, adsService.updateAd(1, CREATE_OR_UPDATE_AD_1_DTO));
         assertEquals(AD_2_DTO, adsService.updateAd(2, CREATE_OR_UPDATE_AD_2_DTO));
@@ -235,16 +208,19 @@ class AdsServiceImplTest {
     }
 
     @Test
+    @WithMockUser(value = "user@test.com")
     void getAllMine() {
         assertEquals(ADS_USER_DTO, adsService.getAllMine());
     }
 
     @Test
+    @WithMockUser(value = "user@test.com")
     void getAdComments() {
         assertEquals(COMMENTS_DTO, adsService.getAdComments(1));
     }
 
     @Test
+    @WithMockUser(value = "user@test.com")
     void addComment() {
         assertEquals(COMMENT_1_DTO, adsService.addComment(1, CREATE_OR_UPDATE_COMMENT_1_DTO));
         assertEquals(COMMENT_2_DTO, adsService.addComment(1, CREATE_OR_UPDATE_COMMENT_2_DTO));
@@ -252,11 +228,13 @@ class AdsServiceImplTest {
     }
 
     @Test
+    @WithMockUser(value = "user@test.com")
     void deleteComment() {
         assertTrue(adsService.deleteComment(1, 1));
     }
 
     @Test
+    @WithMockUser(value = "user@test.com")
     void updateComment() {
         assertEquals(COMMENT_1_DTO, adsService.updateComment(1, 1, CREATE_OR_UPDATE_COMMENT_1_DTO));
         assertEquals(COMMENT_2_DTO, adsService.updateComment(1, 2, CREATE_OR_UPDATE_COMMENT_2_DTO));

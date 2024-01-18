@@ -434,7 +434,7 @@ public class AdsController {
             }
     )
     @PatchMapping(path = "/{id}/image", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
-    public ResponseEntity<String> getAdImage(@RequestPart @Valid Integer id, @RequestBody MultipartFile image) {
+    public ResponseEntity<String> patchAdImage(@RequestPart @Valid Integer id, @RequestBody MultipartFile image) {
         String imageUrl = adsService.updateAdImage(id, image);
         if (imageUrl != null) {
             return ResponseEntity.ok(imageUrl);

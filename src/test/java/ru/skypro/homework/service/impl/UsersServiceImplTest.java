@@ -3,15 +3,10 @@ package ru.skypro.homework.service.impl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.security.test.context.support.WithSecurityContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
@@ -42,11 +37,11 @@ class UsersServiceImplTest {
     UserRepository userRepository;
     @Mock
     UserMapper userMapper;
-    @InjectMocks
     UsersServiceImpl usersService;
 
     @BeforeEach
     void setUp() {
+        usersService = new UsersServiceImpl(userRepository, userMapper, passwordEncoder);
         NEW_PASSWORD_USER_DTO.setCurrentPassword(USER.getPassword());
         NEW_PASSWORD_USER_DTO.setNewPassword(USER.getPassword());
         UPDATE_USER_DTO.setFirstName(USER.getFirstName());
