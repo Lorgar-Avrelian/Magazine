@@ -1,5 +1,6 @@
 package ru.skypro.homework.service.impl;
 
+import org.apache.log4j.Logger;
 import org.mapstruct.Mapper;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -22,6 +23,7 @@ import ru.skypro.homework.service.AuthenticationService;
 
 import javax.transaction.Transactional;
 import java.security.Principal;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -66,6 +68,7 @@ public class AuthenticationServiceImpl implements AuthenticationService, UserDet
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final PasswordEncoderConfig encoderConfiguration;
+    private static final Logger log = Logger.getLogger(AdsServiceImpl.class);
 
     public AuthenticationServiceImpl(UserRepository userRepository, UserMapper userMapper, PasswordEncoderConfig encoderConfiguration) {
         this.userRepository = userRepository;
@@ -104,11 +107,19 @@ public class AuthenticationServiceImpl implements AuthenticationService, UserDet
     @Override
     @Transactional
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepository.findByEmail(username).get();
-        return new org.springframework.security.core.userdetails.User(
-                user.getEmail(),
-                user.getPassword(),
-                Stream.of(user.getRole()).map(role -> new SimpleGrantedAuthority(role.name())).collect(Collectors.toList()));
+        User user = null;
+        try {
+            user = userRepository.findByEmail(username).get();
+        } catch (NoSuchElementException e) {
+            log.error(e.getMessage());
+        }
+        if (user != null) {
+            return new org.springframework.security.core.userdetails.User(
+                    user.getEmail(),
+                    user.getPassword(),
+                    Stream.of(user.getRole()).map(role -> new SimpleGrantedAuthority(role.name())).collect(Collectors.toList()));
+        }
+        return null;
     }
 
     /**

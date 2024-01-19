@@ -10,6 +10,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import ru.skypro.homework.config.ClockConfig;
 import ru.skypro.homework.dto.*;
 import ru.skypro.homework.entity.Ad;
 import ru.skypro.homework.entity.Comment;
@@ -19,12 +20,12 @@ import ru.skypro.homework.repository.AdRepository;
 import ru.skypro.homework.repository.CommentRepository;
 import ru.skypro.homework.repository.UserRepository;
 
+import java.time.Clock;
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.lenient;
 import static ru.skypro.homework.constants.Constants.*;
 
@@ -38,6 +39,7 @@ class AdsServiceImplTest {
     private AdDTO AD_3_DTO = new AdDTO();
     private AdsDTO ADS_DTO = new AdsDTO();
     private AdsDTO ADS_USER_DTO = new AdsDTO();
+    private AdsDTO ADS_ADMIN_DTO = new AdsDTO();
     private CommentDTO COMMENT_1_DTO = new CommentDTO();
     private CommentDTO COMMENT_2_DTO = new CommentDTO();
     private CommentDTO COMMENT_3_DTO = new CommentDTO();
@@ -61,6 +63,10 @@ class AdsServiceImplTest {
     AdMapper adMapper;
     @Mock
     CommentMapper commentMapper;
+    @Mock
+    ClockConfig clockConfig;
+    @Mock
+    Clock clock;
     @InjectMocks
     AdsServiceImpl adsService;
 
@@ -85,6 +91,8 @@ class AdsServiceImplTest {
         ADS_DTO.setResults(List.of(AD_1_DTO, AD_2_DTO, AD_3_DTO));
         ADS_USER_DTO.setCount(2);
         ADS_USER_DTO.setResults(List.of(AD_1_DTO, AD_2_DTO));
+        ADS_ADMIN_DTO.setCount(1);
+        ADS_ADMIN_DTO.setResults(List.of(AD_3_DTO));
         COMMENT_1_DTO.setAuthor(COMMENT_1.getAuthor().getId());
         COMMENT_1_DTO.setAuthorImage(COMMENT_1.getAuthorImage());
         COMMENT_1_DTO.setAuthorFirstName(COMMENT_1.getAuthorFirstName());
@@ -144,7 +152,10 @@ class AdsServiceImplTest {
         EXTENDED_AD_3_DTO.setPhone(AD_3.getAuthor().getPhone());
         EXTENDED_AD_3_DTO.setPrice(AD_3.getPrice());
         EXTENDED_AD_3_DTO.setTitle(AD_3.getTitle());
-        lenient().when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(USER)).thenReturn(Optional.of(ADMIN)).thenReturn(Optional.of(USER));
+        lenient().when(clockConfig.clock()).thenReturn(clock);
+        lenient().when(clock.millis()).thenReturn(111111L);
+        lenient().when(userRepository.findByEmail(USER.getEmail())).thenReturn(Optional.of(USER));
+        lenient().when(userRepository.findByEmail(ADMIN.getEmail())).thenReturn(Optional.of(ADMIN));
         lenient().when(adRepository.findAll()).thenReturn(ADS);
         lenient().when(adMapper.adsListToAdsDto(ADS)).thenReturn(ADS_DTO);
         lenient().when(adRepository.findByPk(1)).thenReturn(Optional.of(AD_1));
@@ -164,10 +175,17 @@ class AdsServiceImplTest {
         lenient().when(adMapper.adToAdDto(AD_2)).thenReturn(AD_2_DTO);
         lenient().when(adMapper.adToAdDto(AD_3)).thenReturn(AD_3_DTO);
         lenient().when(adRepository.findByAuthor(USER)).thenReturn(ADS_USER);
+        lenient().when(adRepository.findByAuthor(ADMIN)).thenReturn(ADS_ADMIN);
         lenient().when(adMapper.adsListToAdsDto(ADS_USER)).thenReturn(ADS_USER_DTO);
+        lenient().when(adMapper.adsListToAdsDto(ADS_ADMIN)).thenReturn(ADS_ADMIN_DTO);
         lenient().when(commentRepository.findByAd(AD_1)).thenReturn(COMMENTS);
         lenient().when(commentMapper.commentListToCommentsDto(COMMENTS)).thenReturn(COMMENTS_DTO);
-        lenient().when(commentRepository.save(any(Comment.class))).thenReturn(COMMENT_1).thenReturn(COMMENT_2).thenReturn(COMMENT_3);
+        lenient().when(commentRepository.save(COMMENT_1_SAVE)).thenReturn(COMMENT_1);
+        lenient().when(commentRepository.save(COMMENT_2_SAVE)).thenReturn(COMMENT_2);
+        lenient().when(commentRepository.save(COMMENT_3_SAVE)).thenReturn(COMMENT_3);
+        lenient().when(commentRepository.save(COMMENT_1)).thenReturn(COMMENT_1);
+        lenient().when(commentRepository.save(COMMENT_2)).thenReturn(COMMENT_2);
+        lenient().when(commentRepository.save(COMMENT_3)).thenReturn(COMMENT_3);
         lenient().when(commentMapper.commentToCommentDto(COMMENT_1)).thenReturn(COMMENT_1_DTO);
         lenient().when(commentMapper.commentToCommentDto(COMMENT_2)).thenReturn(COMMENT_2_DTO);
         lenient().when(commentMapper.commentToCommentDto(COMMENT_3)).thenReturn(COMMENT_3_DTO);
@@ -185,32 +203,82 @@ class AdsServiceImplTest {
 
     @Test
     @WithMockUser(value = "user@test.com")
-    void getAd() {
-        assertEquals(EXTENDED_AD_1_DTO, adsService.getAd(1));
-        assertEquals(EXTENDED_AD_2_DTO, adsService.getAd(2));
-        assertEquals(EXTENDED_AD_3_DTO, adsService.getAd(3));
+    void addAd() {
     }
 
     @Test
     @WithMockUser(value = "user@test.com")
-    void deleteAd() {
+    void getAd() {
+        assertEquals(EXTENDED_AD_1_DTO, adsService.getAd(1));
+        assertEquals(EXTENDED_AD_2_DTO, adsService.getAd(2));
+        assertEquals(EXTENDED_AD_3_DTO, adsService.getAd(3));
+        assertNull(adsService.getAd(4));
+    }
+
+    @Test
+    @WithMockUser(value = "user@test.com")
+    void deleteAdByUser() {
         assertTrue(adsService.deleteAd(1));
         assertTrue(adsService.deleteAd(2));
         assertFalse(adsService.deleteAd(3));
     }
 
     @Test
+    @WithMockUser(value = "admin@test.com")
+    void deleteAdByAdmin() {
+        assertTrue(adsService.deleteAd(1));
+        assertTrue(adsService.deleteAd(2));
+        assertTrue(adsService.deleteAd(3));
+    }
+
+    @Test
+    @WithMockUser(value = "anotheruser@test.com")
+    void deleteAdByAnotherUser() {
+        assertFalse(adsService.deleteAd(1));
+        assertFalse(adsService.deleteAd(2));
+        assertFalse(adsService.deleteAd(3));
+    }
+
+    @Test
     @WithMockUser(value = "user@test.com")
-    void updateAd() {
+    void updateAdWithUser() {
         assertEquals(AD_1_DTO, adsService.updateAd(1, CREATE_OR_UPDATE_AD_1_DTO));
         assertEquals(AD_2_DTO, adsService.updateAd(2, CREATE_OR_UPDATE_AD_2_DTO));
         assertNotEquals(AD_3_DTO, adsService.updateAd(3, CREATE_OR_UPDATE_AD_3_DTO));
     }
 
     @Test
+    @WithMockUser(value = "admin@test.com")
+    void updateAdWithAdmin() {
+        assertEquals(AD_1_DTO, adsService.updateAd(1, CREATE_OR_UPDATE_AD_1_DTO));
+        assertEquals(AD_2_DTO, adsService.updateAd(2, CREATE_OR_UPDATE_AD_2_DTO));
+        assertEquals(AD_3_DTO, adsService.updateAd(3, CREATE_OR_UPDATE_AD_3_DTO));
+    }
+
+    @Test
+    @WithMockUser(value = "anotheruser@test.com")
+    void updateAdWithAnotherUser() {
+        assertNull(adsService.updateAd(1, CREATE_OR_UPDATE_AD_1_DTO));
+        assertNull(adsService.updateAd(2, CREATE_OR_UPDATE_AD_2_DTO));
+        assertNull(adsService.updateAd(3, CREATE_OR_UPDATE_AD_3_DTO));
+    }
+
+    @Test
     @WithMockUser(value = "user@test.com")
-    void getAllMine() {
+    void getAllMineWithUser() {
         assertEquals(ADS_USER_DTO, adsService.getAllMine());
+    }
+
+    @Test
+    @WithMockUser(value = "admin@test.com")
+    void getAllMineWithAdmin() {
+        assertEquals(ADS_ADMIN_DTO, adsService.getAllMine());
+    }
+
+    @Test
+    @WithMockUser(value = "anotheruser@test.com")
+    void getAllMineWithAnotherUser() {
+        assertNull(adsService.getAllMine());
     }
 
     @Test
@@ -224,20 +292,54 @@ class AdsServiceImplTest {
     void addComment() {
         assertEquals(COMMENT_1_DTO, adsService.addComment(1, CREATE_OR_UPDATE_COMMENT_1_DTO));
         assertEquals(COMMENT_2_DTO, adsService.addComment(1, CREATE_OR_UPDATE_COMMENT_2_DTO));
-        assertEquals(COMMENT_3_DTO, adsService.addComment(1, CREATE_OR_UPDATE_COMMENT_3_DTO));
+        assertNull(adsService.addComment(1, CREATE_OR_UPDATE_COMMENT_3_DTO));
     }
 
     @Test
     @WithMockUser(value = "user@test.com")
-    void deleteComment() {
+    void deleteCommentWithUser() {
         assertTrue(adsService.deleteComment(1, 1));
+        assertTrue(adsService.deleteComment(1, 2));
+        assertFalse(adsService.deleteComment(1, 3));
+    }
+
+    @Test
+    @WithMockUser(value = "admin@test.com")
+    void deleteCommentWithAdmin() {
+        assertTrue(adsService.deleteComment(1, 1));
+        assertTrue(adsService.deleteComment(1, 2));
+        assertTrue(adsService.deleteComment(1, 3));
+    }
+
+    @Test
+    @WithMockUser(value = "anotheruser@test.com")
+    void deleteCommentWithAnotherUser() {
+        assertFalse(adsService.deleteComment(1, 1));
+        assertFalse(adsService.deleteComment(1, 2));
+        assertFalse(adsService.deleteComment(1, 3));
     }
 
     @Test
     @WithMockUser(value = "user@test.com")
-    void updateComment() {
+    void updateCommentWithUser() {
         assertEquals(COMMENT_1_DTO, adsService.updateComment(1, 1, CREATE_OR_UPDATE_COMMENT_1_DTO));
         assertEquals(COMMENT_2_DTO, adsService.updateComment(1, 2, CREATE_OR_UPDATE_COMMENT_2_DTO));
-        assertNotEquals(COMMENT_3_DTO, adsService.updateComment(1, 3, CREATE_OR_UPDATE_COMMENT_3_DTO));
+        assertNull(adsService.updateComment(1, 3, CREATE_OR_UPDATE_COMMENT_3_DTO));
+    }
+
+    @Test
+    @WithMockUser(value = "admin@test.com")
+    void updateCommentWithAdmin() {
+        assertEquals(COMMENT_1_DTO, adsService.updateComment(1, 1, CREATE_OR_UPDATE_COMMENT_1_DTO));
+        assertEquals(COMMENT_2_DTO, adsService.updateComment(1, 2, CREATE_OR_UPDATE_COMMENT_2_DTO));
+        assertEquals(COMMENT_3_DTO, adsService.updateComment(1, 3, CREATE_OR_UPDATE_COMMENT_3_DTO));
+    }
+
+    @Test
+    @WithMockUser(value = "anotheruser@test.com")
+    void updateCommentWithAnotherUser() {
+        assertNull(adsService.updateComment(1, 1, CREATE_OR_UPDATE_COMMENT_1_DTO));
+        assertNull(adsService.updateComment(1, 2, CREATE_OR_UPDATE_COMMENT_2_DTO));
+        assertNull(adsService.updateComment(1, 3, CREATE_OR_UPDATE_COMMENT_3_DTO));
     }
 }

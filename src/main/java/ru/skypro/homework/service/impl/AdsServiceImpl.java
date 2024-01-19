@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import ru.skypro.homework.config.ClockConfig;
 import ru.skypro.homework.dto.*;
 import ru.skypro.homework.entity.Ad;
 import ru.skypro.homework.entity.Comment;
@@ -22,7 +23,6 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -48,14 +48,16 @@ public class AdsServiceImpl implements AdsService {
     private final UserRepository userRepository;
     private final AdMapper adMapper;
     private final CommentMapper commentMapper;
+    private final ClockConfig clock;
     private static final Logger log = Logger.getLogger(AdsServiceImpl.class);
 
-    public AdsServiceImpl(AdRepository adRepository, CommentRepository commentRepository, UserRepository userRepository, AdMapper adMapper, CommentMapper commentMapper) {
+    public AdsServiceImpl(AdRepository adRepository, CommentRepository commentRepository, UserRepository userRepository, AdMapper adMapper, CommentMapper commentMapper, ClockConfig clock) {
         this.adRepository = adRepository;
         this.commentRepository = commentRepository;
         this.userRepository = userRepository;
         this.adMapper = adMapper;
         this.commentMapper = commentMapper;
+        this.clock = clock;
     }
 
     /**
@@ -252,7 +254,11 @@ public class AdsServiceImpl implements AdsService {
         User user = getUser();
         Ad adUpdate = adMapper.createOrUpdateAdDtoToAd(createOrUpdateAdDTO);
         Ad ad = getThatAd(pk);
-        user = userCheck(user, ad);
+        if (user != null) {
+            user = userCheck(user, ad);
+        } else {
+            return null;
+        }
         if (ad != null && user != null) {
             ad.setTitle(adUpdate.getTitle());
             ad.setPrice(adUpdate.getPrice());
@@ -398,7 +404,7 @@ public class AdsServiceImpl implements AdsService {
         if (user == null || ad == null) {
             return null;
         }
-        Comment comment = new Comment(null, user, user.getImage(), user.getFirstName(), new Date().getTime(), createOrUpdateCommentDTO.getText(), ad);
+        Comment comment = new Comment(null, user, user.getImage(), user.getFirstName(), clock.clock().millis(), createOrUpdateCommentDTO.getText(), ad);
         comment = commentRepository.save(comment);
         return commentMapper.commentToCommentDto(comment);
     }
@@ -470,7 +476,7 @@ public class AdsServiceImpl implements AdsService {
             log.error(e.getMessage());
         }
         if (comment == null) {
-            comment = new Comment(commentPk, user, user.getImage(), user.getFirstName(), new Date().getTime(), createOrUpdateCommentDTO.getText(), ad);
+            comment = new Comment(commentPk, user, user.getImage(), user.getFirstName(), clock.clock().millis(), createOrUpdateCommentDTO.getText(), ad);
         } else {
             user = userCheck(user, comment);
             if (user == null) {

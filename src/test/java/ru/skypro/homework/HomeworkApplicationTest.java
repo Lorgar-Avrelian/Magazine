@@ -36,6 +36,7 @@ import ru.skypro.homework.service.impl.AuthenticationServiceImpl;
 import ru.skypro.homework.service.impl.ImageServiceImpl;
 import ru.skypro.homework.service.impl.UsersServiceImpl;
 
+import java.time.Clock;
 import java.util.List;
 import java.util.Optional;
 
@@ -116,6 +117,8 @@ class HomeworkApplicationTest {
     ImageController imageController;
     @Autowired
     UsersController usersController;
+    @MockBean
+    Clock clock;
 
     @BeforeEach
     void setUp() {
