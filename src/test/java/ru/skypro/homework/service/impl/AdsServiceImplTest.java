@@ -3,8 +3,8 @@ package ru.skypro.homework.service.impl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
@@ -28,7 +28,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.lenient;
 import static ru.skypro.homework.constants.Constants.*;
 
-@ExtendWith({MockitoExtension.class, SpringExtension.class})
+@ExtendWith(SpringExtension.class)
 @ContextConfiguration
 @ActiveProfiles("test")
 @TestPropertySource(locations = "classpath:application-test.properties")
@@ -61,11 +61,11 @@ class AdsServiceImplTest {
     AdMapper adMapper;
     @Mock
     CommentMapper commentMapper;
+    @InjectMocks
     AdsServiceImpl adsService;
 
     @BeforeEach
     void setUp() {
-        adsService = new AdsServiceImpl(adRepository, commentRepository, userRepository, adMapper, commentMapper);
         AD_1_DTO.setAuthor(AD_1.getAuthor().getId());
         AD_1_DTO.setImage(AD_1.getImage());
         AD_1_DTO.setPk(AD_1.getPk());

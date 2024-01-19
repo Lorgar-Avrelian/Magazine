@@ -7,6 +7,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import ru.skypro.homework.config.PasswordEncoderConfig;
 import ru.skypro.homework.dto.NewPasswordDTO;
 import ru.skypro.homework.dto.UpdateUserDTO;
 import ru.skypro.homework.dto.UserDTO;
@@ -40,13 +41,13 @@ public class UsersServiceImpl implements UsersService {
     private String imageDir;
     private final UserRepository userRepository;
     private final UserMapper userMapper;
-    private final PasswordEncoder passwordEncoder;
+    private final PasswordEncoderConfig passwordEncoderConfig;
     private static final Logger log = Logger.getLogger(UsersServiceImpl.class);
 
-    public UsersServiceImpl(UserRepository userRepository, UserMapper userMapper, PasswordEncoder passwordEncoder) {
+    public UsersServiceImpl(UserRepository userRepository, UserMapper userMapper, PasswordEncoderConfig passwordEncoderConfig) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
-        this.passwordEncoder = passwordEncoder;
+        this.passwordEncoderConfig = passwordEncoderConfig;
     }
 
     /**
@@ -73,7 +74,7 @@ public class UsersServiceImpl implements UsersService {
             log.error(e.getMessage());
         }
         if (user != null) {
-            user.setPassword(passwordEncoder.encode(newPassword.getNewPassword()));
+            user.setPassword(passwordEncoderConfig.passwordEncoder().encode(newPassword.getNewPassword()));
             userRepository.save(user);
         }
     }

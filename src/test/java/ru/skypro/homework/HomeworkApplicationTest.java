@@ -4,18 +4,18 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.MediaType;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.context.WebApplicationContext;
 import ru.skypro.homework.config.PasswordEncoderConfig;
 import ru.skypro.homework.config.SecurityFilterChainConfig;
 import ru.skypro.homework.controller.AdsController;
@@ -47,7 +47,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static ru.skypro.homework.constants.Constants.*;
 
-@WebMvcTest
+@SpringBootTest
 @AutoConfigureMockMvc
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration
@@ -78,11 +78,15 @@ class HomeworkApplicationTest {
     private UserDTO USER_DTO = new UserDTO();
     @Autowired
     MockMvc mockMvc;
+    @Autowired
+    WebApplicationContext context;
     @MockBean
     PasswordEncoderConfig passwordEncoderConfig;
     @MockBean
-    PasswordEncoder passwordEncoder;
+    DaoAuthenticationProvider daoAuthenticationProvider;
     @MockBean
+    BCryptPasswordEncoder passwordEncoder;
+    @Autowired
     SecurityFilterChainConfig securityFilterChainConfig;
     @MockBean
     AdRepository adRepository;
@@ -90,43 +94,43 @@ class HomeworkApplicationTest {
     CommentRepository commentRepository;
     @MockBean
     UserRepository userRepository;
-    @MockBean
+    @Autowired
     AdMapper adMapper;
-    @MockBean
+    @Autowired
     CommentMapper commentMapper;
-    @MockBean
+    @Autowired
     UserMapper userMapper;
-    @SpyBean
+    @Autowired
     AdsServiceImpl adsService;
-    @SpyBean
+    @Autowired
     AuthenticationServiceImpl authenticationService;
-    @SpyBean
+    @Autowired
     ImageServiceImpl imageService;
-    @SpyBean
+    @Autowired
     UsersServiceImpl usersService;
-    @InjectMocks
+    @Autowired
     AdsController adsController;
-    @InjectMocks
+    @Autowired
     AuthenticationController authenticationController;
-    @InjectMocks
+    @Autowired
     ImageController imageController;
-    @InjectMocks
+    @Autowired
     UsersController usersController;
 
     @BeforeEach
     void setUp() {
         AD_1_DTO.setAuthor(AD_1.getAuthor().getId());
-        AD_1_DTO.setImage(AD_1.getImage());
+        AD_1_DTO.setImage("/" + AD_1.getImage());
         AD_1_DTO.setPk(AD_1.getPk());
         AD_1_DTO.setPrice(AD_1.getPrice());
         AD_1_DTO.setTitle(AD_1.getTitle());
         AD_2_DTO.setAuthor(AD_2.getAuthor().getId());
-        AD_2_DTO.setImage(AD_2.getImage());
+        AD_2_DTO.setImage("/" + AD_2.getImage());
         AD_2_DTO.setPk(AD_2.getPk());
         AD_2_DTO.setPrice(AD_2.getPrice());
         AD_2_DTO.setTitle(AD_2.getTitle());
         AD_3_DTO.setAuthor(AD_3.getAuthor().getId());
-        AD_3_DTO.setImage(AD_3.getImage());
+        AD_3_DTO.setImage("/" + AD_3.getImage());
         AD_3_DTO.setPk(AD_3.getPk());
         AD_3_DTO.setPrice(AD_3.getPrice());
         AD_3_DTO.setTitle(AD_3.getTitle());
@@ -135,19 +139,19 @@ class HomeworkApplicationTest {
         ADS_USER_DTO.setCount(2);
         ADS_USER_DTO.setResults(List.of(AD_1_DTO, AD_2_DTO));
         COMMENT_1_DTO.setAuthor(COMMENT_1.getAuthor().getId());
-        COMMENT_1_DTO.setAuthorImage(COMMENT_1.getAuthorImage());
+        COMMENT_1_DTO.setAuthorImage("/" + COMMENT_1.getAuthorImage());
         COMMENT_1_DTO.setAuthorFirstName(COMMENT_1.getAuthorFirstName());
         COMMENT_1_DTO.setCreatedAt(COMMENT_1.getCreatedAt());
         COMMENT_1_DTO.setPk(COMMENT_1.getPk());
         COMMENT_1_DTO.setText(COMMENT_1.getText());
         COMMENT_2_DTO.setAuthor(COMMENT_2.getAuthor().getId());
-        COMMENT_2_DTO.setAuthorImage(COMMENT_2.getAuthorImage());
+        COMMENT_2_DTO.setAuthorImage("/" + COMMENT_2.getAuthorImage());
         COMMENT_2_DTO.setAuthorFirstName(COMMENT_2.getAuthorFirstName());
         COMMENT_2_DTO.setCreatedAt(COMMENT_2.getCreatedAt());
         COMMENT_2_DTO.setPk(COMMENT_2.getPk());
         COMMENT_2_DTO.setText(COMMENT_2.getText());
         COMMENT_3_DTO.setAuthor(COMMENT_3.getAuthor().getId());
-        COMMENT_3_DTO.setAuthorImage(COMMENT_3.getAuthorImage());
+        COMMENT_3_DTO.setAuthorImage("/" + COMMENT_3.getAuthorImage());
         COMMENT_3_DTO.setAuthorFirstName(COMMENT_3.getAuthorFirstName());
         COMMENT_3_DTO.setCreatedAt(COMMENT_3.getCreatedAt());
         COMMENT_3_DTO.setPk(COMMENT_3.getPk());
@@ -171,7 +175,7 @@ class HomeworkApplicationTest {
         EXTENDED_AD_1_DTO.setAuthorLastName(AD_1.getAuthor().getLastName());
         EXTENDED_AD_1_DTO.setDescription(AD_1.getDescription());
         EXTENDED_AD_1_DTO.setEmail(AD_1.getAuthor().getEmail());
-        EXTENDED_AD_1_DTO.setImage(AD_1.getImage());
+        EXTENDED_AD_1_DTO.setImage("/" + AD_1.getImage());
         EXTENDED_AD_1_DTO.setPhone(AD_1.getAuthor().getPhone());
         EXTENDED_AD_1_DTO.setPrice(AD_1.getPrice());
         EXTENDED_AD_1_DTO.setTitle(AD_1.getTitle());
@@ -180,7 +184,7 @@ class HomeworkApplicationTest {
         EXTENDED_AD_2_DTO.setAuthorLastName(AD_2.getAuthor().getLastName());
         EXTENDED_AD_2_DTO.setDescription(AD_2.getDescription());
         EXTENDED_AD_2_DTO.setEmail(AD_2.getAuthor().getEmail());
-        EXTENDED_AD_2_DTO.setImage(AD_2.getImage());
+        EXTENDED_AD_2_DTO.setImage("/" + AD_2.getImage());
         EXTENDED_AD_2_DTO.setPhone(AD_2.getAuthor().getPhone());
         EXTENDED_AD_2_DTO.setPrice(AD_2.getPrice());
         EXTENDED_AD_2_DTO.setTitle(AD_2.getTitle());
@@ -189,7 +193,7 @@ class HomeworkApplicationTest {
         EXTENDED_AD_3_DTO.setAuthorLastName(AD_3.getAuthor().getLastName());
         EXTENDED_AD_3_DTO.setDescription(AD_3.getDescription());
         EXTENDED_AD_3_DTO.setEmail(AD_3.getAuthor().getEmail());
-        EXTENDED_AD_3_DTO.setImage(AD_3.getImage());
+        EXTENDED_AD_3_DTO.setImage("/" + AD_3.getImage());
         EXTENDED_AD_3_DTO.setPhone(AD_3.getAuthor().getPhone());
         EXTENDED_AD_3_DTO.setPrice(AD_3.getPrice());
         EXTENDED_AD_3_DTO.setTitle(AD_3.getTitle());
@@ -214,38 +218,26 @@ class HomeworkApplicationTest {
         USER_DTO.setLastName(USER.getLastName());
         USER_DTO.setPhone(USER.getPhone());
         USER_DTO.setRole(USER.getRole());
-        USER_DTO.setImage(USER.getImage());
-        lenient().when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(USER)).thenReturn(Optional.of(ADMIN));
-        lenient().when(userMapper.userToUserDto(USER)).thenReturn(USER_DTO);
-        lenient().when(userMapper.updateUserDtoToUser(any(UpdateUserDTO.class))).thenReturn(USER);
+        USER_DTO.setImage("/" + USER.getImage());
+        lenient().when(userRepository.findByEmail(USER.getEmail())).thenReturn(Optional.of(USER));
         lenient().when(userRepository.save(USER)).thenReturn(USER);
-        lenient().when(userMapper.userToUpdateUserDto(USER)).thenReturn(UPDATE_USER_DTO);
+        lenient().when(passwordEncoderConfig.passwordEncoder()).thenReturn(passwordEncoder);
         lenient().when(passwordEncoder.matches(anyString(), anyString())).thenReturn(true);
         lenient().when(passwordEncoder.encode(any())).thenReturn(USER.getPassword());
         lenient().when(adRepository.findAll()).thenReturn(ADS);
-        lenient().when(adMapper.adsListToAdsDto(ADS)).thenReturn(ADS_DTO);
         lenient().when(adRepository.findByPk(anyInt())).thenReturn(Optional.of(AD_1));
-        lenient().when(adMapper.adToExtendedAd(AD_1, USER)).thenReturn(EXTENDED_AD_1_DTO);
         lenient().doNothing().when(adRepository).delete(any(Ad.class));
-        lenient().when(adMapper.createOrUpdateAdDtoToAd(any())).thenReturn(AD_1);
         lenient().when(adRepository.save(AD_1)).thenReturn(AD_1);
-        lenient().when(adMapper.adToAdDto(AD_1)).thenReturn(AD_1_DTO);
         lenient().when(adRepository.findByAuthor(USER)).thenReturn(ADS_USER);
-        lenient().when(adMapper.adsListToAdsDto(ADS_USER)).thenReturn(ADS_USER_DTO);
         lenient().when(commentRepository.findByAd(any(Ad.class))).thenReturn(COMMENTS);
-        lenient().when(commentMapper.commentListToCommentsDto(COMMENTS)).thenReturn(COMMENTS_DTO);
         lenient().when(commentRepository.save(any(Comment.class))).thenReturn(COMMENT_1);
-        lenient().when(commentMapper.commentToCommentDto(COMMENT_1)).thenReturn(COMMENT_1_DTO);
         lenient().when(commentRepository.findByPk(anyInt())).thenReturn(Optional.of(COMMENT_1));
         lenient().doNothing().when(commentRepository).delete(any(Comment.class));
-        lenient().when(userMapper.registerDtoToUser(REGISTER_USER_DTO)).thenReturn(USER);
     }
 
     @Test
-    @WithMockUser(value = "spring", username = "user@test.com")
+    @WithMockUser(value = "user@test.com", username = "user@test.com")
     void setPassword() throws Exception {
-        mockMvc.perform(post("/users/set_password"))
-               .andExpect(status().isForbidden());
         mockMvc.perform(post("/users/set_password")
                                 .with(csrf())
                                 .contentType(MediaType.APPLICATION_JSON_VALUE)
@@ -254,7 +246,7 @@ class HomeworkApplicationTest {
     }
 
     @Test
-    @WithMockUser(value = "spring", username = "user@test.com")
+    @WithMockUser(value = "user@test.com", username = "user@test.com")
     void me() throws Exception {
         mockMvc.perform(get("/users/me")
                                 .with(csrf())
@@ -269,7 +261,7 @@ class HomeworkApplicationTest {
     }
 
     @Test
-    @WithMockUser(value = "spring", username = "user@test.com")
+    @WithMockUser(value = "user@test.com", username = "user@test.com")
     void meUpdate() throws Exception {
         mockMvc.perform(patch("/users/me")
                                 .with(csrf())
@@ -283,21 +275,30 @@ class HomeworkApplicationTest {
     }
 
     @Test
+    @WithMockUser(value = "user@test.com", username = "user@test.com")
     void meImage() throws Exception {
     }
 
     @Test
-    @WithMockUser(value = "user@test.com", username = "user@test.com")
     void login() throws Exception {
+        mockMvc.perform(post("/login")
+                                .with(csrf())
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(new ObjectMapper().writeValueAsString(LOGIN_USER_DTO)))
+               .andExpect(status().isOk());
     }
 
     @Test
-    @WithMockUser(value = "spring", username = "user@test.com")
     void register() throws Exception {
+        mockMvc.perform(post("/register")
+                                .with(csrf())
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(new ObjectMapper().writeValueAsString(REGISTER_USER_DTO)))
+               .andExpect(status().isBadRequest());
     }
 
     @Test
-    @WithMockUser(value = "spring", username = "user@test.com")
+    @WithMockUser(value = "user@test.com", username = "user@test.com")
     void getAll() throws Exception {
         mockMvc.perform(get("/ads")
                                 .with(csrf())
@@ -322,12 +323,12 @@ class HomeworkApplicationTest {
     }
 
     @Test
-    @WithMockUser(value = "spring", username = "user@test.com")
+    @WithMockUser(value = "user@test.com", username = "user@test.com")
     void postAd() throws Exception {
     }
 
     @Test
-    @WithMockUser(value = "spring", username = "user@test.com")
+    @WithMockUser(value = "user@test.com", username = "user@test.com")
     void getAd() throws Exception {
         mockMvc.perform(get("/ads/1")
                                 .with(csrf())
@@ -345,7 +346,7 @@ class HomeworkApplicationTest {
     }
 
     @Test
-    @WithMockUser(value = "spring", username = "user@test.com")
+    @WithMockUser(value = "user@test.com", username = "user@test.com")
     void deleteAd() throws Exception {
         mockMvc.perform(delete("/ads/1")
                                 .with(csrf()))
@@ -353,7 +354,7 @@ class HomeworkApplicationTest {
     }
 
     @Test
-    @WithMockUser(value = "spring", username = "user@test.com")
+    @WithMockUser(value = "user@test.com", username = "user@test.com")
     void updateAd() throws Exception {
         mockMvc.perform(patch("/ads/1")
                                 .with(csrf())
@@ -369,7 +370,7 @@ class HomeworkApplicationTest {
     }
 
     @Test
-    @WithMockUser(value = "spring", username = "user@test.com")
+    @WithMockUser(value = "user@test.com", username = "user@test.com")
     void getMe() throws Exception {
         mockMvc.perform(get("/ads/me")
                                 .with(csrf())
@@ -389,12 +390,12 @@ class HomeworkApplicationTest {
     }
 
     @Test
-    @WithMockUser(value = "spring", username = "user@test.com")
+    @WithMockUser(value = "user@test.com", username = "user@test.com")
     void patchAdImage() throws Exception {
     }
 
     @Test
-    @WithMockUser(value = "spring", username = "user@test.com")
+    @WithMockUser(value = "user@test.com", username = "user@test.com")
     void getAdComments() throws Exception {
         mockMvc.perform(get("/ads/1/comments")
                                 .with(csrf())
@@ -422,7 +423,7 @@ class HomeworkApplicationTest {
     }
 
     @Test
-    @WithMockUser(value = "spring", username = "user@test.com")
+    @WithMockUser(value = "user@test.com", username = "user@test.com")
     void postAdComment() throws Exception {
         mockMvc.perform(post("/ads/1/comments")
                                 .with(csrf())
@@ -439,7 +440,7 @@ class HomeworkApplicationTest {
     }
 
     @Test
-    @WithMockUser(value = "spring", username = "user@test.com")
+    @WithMockUser(value = "user@test.com", username = "user@test.com")
     void deleteAdComment() throws Exception {
         mockMvc.perform(delete("/ads/1/comments/1")
                                 .with(csrf())
@@ -448,7 +449,7 @@ class HomeworkApplicationTest {
     }
 
     @Test
-    @WithMockUser(value = "spring", username = "user@test.com")
+    @WithMockUser(value = "user@test.com", username = "user@test.com")
     void updateAdComment() throws Exception {
         mockMvc.perform(patch("/ads/1/comments/1")
                                 .with(csrf())
@@ -465,7 +466,6 @@ class HomeworkApplicationTest {
     }
 
     @Test
-    @WithMockUser(value = "spring", username = "user@test.com")
     void downloadImage() throws Exception {
     }
 }

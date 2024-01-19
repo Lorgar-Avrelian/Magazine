@@ -64,7 +64,7 @@ public interface AdMapper {
         extendedAd.setImage("/" + ad.getImage());
         extendedAd.setPhone(author.getPhone());
         extendedAd.setPrice(ad.getPrice());
-        extendedAd.setPrice(ad.getPrice());
+        extendedAd.setTitle(ad.getTitle());
         return extendedAd;
     }
 }

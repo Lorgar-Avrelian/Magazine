@@ -3,8 +3,8 @@ package ru.skypro.homework.service.impl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
@@ -24,7 +24,7 @@ import static org.mockito.Mockito.lenient;
 import static ru.skypro.homework.constants.Constants.ADMIN;
 import static ru.skypro.homework.constants.Constants.USER;
 
-@ExtendWith({MockitoExtension.class, SpringExtension.class})
+@ExtendWith(SpringExtension.class)
 @ContextConfiguration
 @ActiveProfiles("test")
 @TestPropertySource(locations = "classpath:application-test.properties")
@@ -40,11 +40,11 @@ class AuthenticationServiceImplTest {
     PasswordEncoderConfig encoderConfiguration;
     @Mock
     BCryptPasswordEncoder passwordEncoder;
+    @InjectMocks
     AuthenticationServiceImpl authenticationService;
 
     @BeforeEach
     void setUp() {
-        authenticationService = new AuthenticationServiceImpl(userRepository, userMapper, encoderConfiguration);
         LOGIN_USER_DTO.setUsername(USER.getEmail());
         LOGIN_USER_DTO.setPassword(USER.getPassword());
         LOGIN_ADMIN_DTO.setUsername(ADMIN.getEmail());
