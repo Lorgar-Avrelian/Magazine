@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -15,7 +16,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
+import ru.skypro.homework.config.ClockConfig;
 import ru.skypro.homework.config.PasswordEncoderConfig;
 import ru.skypro.homework.config.SecurityFilterChainConfig;
 import ru.skypro.homework.controller.AdsController;
@@ -40,9 +43,10 @@ import java.time.Clock;
 import java.util.List;
 import java.util.Optional;
 
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.*;
+import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -74,9 +78,12 @@ class HomeworkApplicationTest {
     private LoginDTO LOGIN_USER_DTO = new LoginDTO();
     private LoginDTO LOGIN_ADMIN_DTO = new LoginDTO();
     private NewPasswordDTO NEW_PASSWORD_USER_DTO = new NewPasswordDTO();
+    private NewPasswordDTO NEW_PASSWORD_ANOTHER_USER_DTO = new NewPasswordDTO();
+    private NewPasswordDTO NEW_PASSWORD_ADMIN_DTO = new NewPasswordDTO();
     private RegisterDTO REGISTER_USER_DTO = new RegisterDTO();
     private UpdateUserDTO UPDATE_USER_DTO = new UpdateUserDTO();
     private UserDTO USER_DTO = new UserDTO();
+    private UserDTO ADMIN_DTO = new UserDTO();
     @Autowired
     MockMvc mockMvc;
     @Autowired
@@ -101,13 +108,13 @@ class HomeworkApplicationTest {
     CommentMapper commentMapper;
     @Autowired
     UserMapper userMapper;
-    @Autowired
+    @SpyBean
     AdsServiceImpl adsService;
-    @Autowired
+    @SpyBean
     AuthenticationServiceImpl authenticationService;
-    @Autowired
+    @SpyBean
     ImageServiceImpl imageService;
-    @Autowired
+    @SpyBean
     UsersServiceImpl usersService;
     @Autowired
     AdsController adsController;
@@ -119,9 +126,15 @@ class HomeworkApplicationTest {
     UsersController usersController;
     @MockBean
     Clock clock;
+    @MockBean
+    ClockConfig clockConfig;
 
     @BeforeEach
     void setUp() {
+        mockMvc = MockMvcBuilders
+                .webAppContextSetup(context)
+                .apply(springSecurity())
+                .build();
         AD_1_DTO.setAuthor(AD_1.getAuthor().getId());
         AD_1_DTO.setImage("/" + AD_1.getImage());
         AD_1_DTO.setPk(AD_1.getPk());
@@ -205,7 +218,11 @@ class HomeworkApplicationTest {
         LOGIN_ADMIN_DTO.setUsername(ADMIN.getEmail());
         LOGIN_ADMIN_DTO.setPassword(ADMIN.getPassword());
         NEW_PASSWORD_USER_DTO.setCurrentPassword(USER.getPassword());
-        NEW_PASSWORD_USER_DTO.setNewPassword(USER.getPassword());
+        NEW_PASSWORD_USER_DTO.setNewPassword(ADMIN.getPassword());
+        NEW_PASSWORD_ADMIN_DTO.setCurrentPassword(ADMIN.getPassword());
+        NEW_PASSWORD_ADMIN_DTO.setNewPassword(USER.getPassword());
+        NEW_PASSWORD_ANOTHER_USER_DTO.setCurrentPassword(ANOTHER_USER.getPassword());
+        NEW_PASSWORD_ANOTHER_USER_DTO.setNewPassword(ADMIN.getPassword());
         REGISTER_USER_DTO.setUsername(USER.getEmail());
         REGISTER_USER_DTO.setPassword(USER.getPassword());
         REGISTER_USER_DTO.setFirstName(USER.getFirstName());
@@ -222,36 +239,75 @@ class HomeworkApplicationTest {
         USER_DTO.setPhone(USER.getPhone());
         USER_DTO.setRole(USER.getRole());
         USER_DTO.setImage("/" + USER.getImage());
+        ADMIN_DTO.setId(ADMIN.getId());
+        ADMIN_DTO.setEmail(ADMIN.getEmail());
+        ADMIN_DTO.setFirstName(ADMIN.getFirstName());
+        ADMIN_DTO.setLastName(ADMIN.getLastName());
+        ADMIN_DTO.setPhone(ADMIN.getPhone());
+        ADMIN_DTO.setRole(ADMIN.getRole());
+        ADMIN_DTO.setImage("/" + ADMIN.getImage());
+        lenient().when(clockConfig.clock()).thenReturn(clock);
+        lenient().when(clock.millis()).thenReturn(111111L);
         lenient().when(userRepository.findByEmail(USER.getEmail())).thenReturn(Optional.of(USER));
+        lenient().when(userRepository.findByEmail(ADMIN.getEmail())).thenReturn(Optional.of(ADMIN));
         lenient().when(userRepository.save(USER)).thenReturn(USER);
+        lenient().when(userRepository.save(ADMIN)).thenReturn(ADMIN);
         lenient().when(passwordEncoderConfig.passwordEncoder()).thenReturn(passwordEncoder);
-        lenient().when(passwordEncoder.matches(anyString(), anyString())).thenReturn(true);
-        lenient().when(passwordEncoder.encode(any())).thenReturn(USER.getPassword());
+        lenient().when(passwordEncoder.encode(USER.getPassword())).thenReturn(USER.getPassword());
+        lenient().when(passwordEncoder.encode(ADMIN.getPassword())).thenReturn(ADMIN.getPassword());
+        lenient().when(passwordEncoder.matches(USER.getPassword(), USER.getPassword())).thenReturn(true);
+        lenient().when(passwordEncoder.matches(ADMIN.getPassword(), ADMIN.getPassword())).thenReturn(true);
         lenient().when(adRepository.findAll()).thenReturn(ADS);
-        lenient().when(adRepository.findByPk(anyInt())).thenReturn(Optional.of(AD_1));
+        lenient().when(adRepository.findByPk(AD_1.getPk())).thenReturn(Optional.of(AD_1));
+        lenient().when(adRepository.findByPk(AD_2.getPk())).thenReturn(Optional.of(AD_2));
+        lenient().when(adRepository.findByPk(AD_3.getPk())).thenReturn(Optional.of(AD_3));
         lenient().doNothing().when(adRepository).delete(any(Ad.class));
         lenient().when(adRepository.save(AD_1)).thenReturn(AD_1);
+        lenient().when(adRepository.save(AD_2)).thenReturn(AD_2);
+        lenient().when(adRepository.save(AD_3)).thenReturn(AD_3);
         lenient().when(adRepository.findByAuthor(USER)).thenReturn(ADS_USER);
-        lenient().when(commentRepository.findByAd(any(Ad.class))).thenReturn(COMMENTS);
-        lenient().when(commentRepository.save(any(Comment.class))).thenReturn(COMMENT_1);
-        lenient().when(commentRepository.findByPk(anyInt())).thenReturn(Optional.of(COMMENT_1));
+        lenient().when(adRepository.findByAuthor(ADMIN)).thenReturn(ADS_ADMIN);
+        lenient().when(commentRepository.findByAd(AD_1)).thenReturn(COMMENTS);
+        lenient().when(commentRepository.save(COMMENT_1_SAVE)).thenReturn(COMMENT_1);
+        lenient().when(commentRepository.save(COMMENT_2_SAVE)).thenReturn(COMMENT_2);
+        lenient().when(commentRepository.save(COMMENT_3_SAVE)).thenReturn(COMMENT_3);
+        lenient().when(commentRepository.save(COMMENT_1)).thenReturn(COMMENT_1);
+        lenient().when(commentRepository.save(COMMENT_2)).thenReturn(COMMENT_2);
+        lenient().when(commentRepository.save(COMMENT_3)).thenReturn(COMMENT_3);
+        lenient().when(commentRepository.findByPk(COMMENT_1.getPk())).thenReturn(Optional.of(COMMENT_1));
+        lenient().when(commentRepository.findByPk(COMMENT_2.getPk())).thenReturn(Optional.of(COMMENT_2));
+        lenient().when(commentRepository.findByPk(COMMENT_3.getPk())).thenReturn(Optional.of(COMMENT_3));
         lenient().doNothing().when(commentRepository).delete(any(Comment.class));
     }
 
     @Test
-    @WithMockUser(value = "user@test.com", username = "user@test.com")
     void setPassword() throws Exception {
         mockMvc.perform(post("/users/set_password")
-                                .with(csrf())
+                                .with(user(USER.getEmail()).password(USER.getPassword()))
                                 .contentType(MediaType.APPLICATION_JSON_VALUE)
                                 .content(new ObjectMapper().writeValueAsString(NEW_PASSWORD_USER_DTO)))
                .andExpect(status().isOk());
+        mockMvc.perform(post("/users/set_password")
+                                .with(user(ADMIN.getEmail()).password(ADMIN.getPassword()))
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(new ObjectMapper().writeValueAsString(NEW_PASSWORD_ADMIN_DTO)))
+               .andExpect(status().isOk());
+        mockMvc.perform(post("/users/set_password")
+                                .with(anonymous())
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(new ObjectMapper().writeValueAsString(NEW_PASSWORD_ANOTHER_USER_DTO)))
+               .andExpect(status().isUnauthorized());
+        mockMvc.perform(post("/users/set_password")
+                                .with(user(ADMIN.getEmail()).password(ADMIN.getPassword()))
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(new ObjectMapper().writeValueAsString(NEW_PASSWORD_ANOTHER_USER_DTO)))
+               .andExpect(status().isForbidden());
     }
 
     @Test
-    @WithMockUser(value = "user@test.com", username = "user@test.com")
     void me() throws Exception {
         mockMvc.perform(get("/users/me")
+                                .with(user("user@test.com").password("123"))
                                 .with(csrf())
                                 .accept(MediaType.APPLICATION_JSON_VALUE))
                .andExpect(status().isOk())
@@ -261,6 +317,22 @@ class HomeworkApplicationTest {
                .andExpect(jsonPath("$.lastName").value(USER_DTO.getLastName()))
                .andExpect(jsonPath("$.role").value(String.valueOf(USER_DTO.getRole())))
                .andExpect(jsonPath("$.image").value(USER_DTO.getImage()));
+        mockMvc.perform(get("/users/me")
+                                .with(user("admin@test.com").password("321"))
+                                .with(csrf())
+                                .accept(MediaType.APPLICATION_JSON_VALUE))
+               .andExpect(status().isOk())
+               .andExpect(jsonPath("$.id").value(ADMIN_DTO.getId()))
+               .andExpect(jsonPath("$.email").value(ADMIN_DTO.getEmail()))
+               .andExpect(jsonPath("$.firstName").value(ADMIN_DTO.getFirstName()))
+               .andExpect(jsonPath("$.lastName").value(ADMIN_DTO.getLastName()))
+               .andExpect(jsonPath("$.role").value(String.valueOf(ADMIN_DTO.getRole())))
+               .andExpect(jsonPath("$.image").value(ADMIN_DTO.getImage()));
+        mockMvc.perform(get("/users/me")
+                                .with(anonymous())
+                                .with(csrf())
+                                .accept(MediaType.APPLICATION_JSON_VALUE))
+               .andExpect(status().isUnauthorized());
     }
 
     @Test

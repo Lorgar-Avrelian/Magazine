@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import ru.skypro.homework.dto.NewPasswordDTO;
@@ -91,7 +92,11 @@ public class UsersController {
     )
     @PostMapping(path = "/set_password")
     public ResponseEntity<?> setPassword(@RequestBody NewPasswordDTO newPassword) {
-        usersService.setPassword(newPassword);
+        try {
+            usersService.setPassword(newPassword);
+        } catch (UsernameNotFoundException e) {
+            return ResponseEntity.status(403).build();
+        }
         return ResponseEntity.ok().build();
     }
 

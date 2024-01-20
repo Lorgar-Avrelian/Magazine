@@ -70,6 +70,7 @@ class UsersServiceImplTest {
         lenient().when(userRepository.findByEmail(ADMIN.getEmail())).thenReturn(Optional.of(ADMIN));
         lenient().when(passwordEncoderConfig.passwordEncoder()).thenReturn(passwordEncoder);
         lenient().when(passwordEncoder.encode(USER.getPassword())).thenReturn(USER.getPassword());
+        lenient().when(passwordEncoder.matches(USER.getPassword(), NEW_PASSWORD_USER_DTO.getCurrentPassword())).thenReturn(true);
         lenient().when(userMapper.userToUserDto(USER)).thenReturn(USER_DTO);
         lenient().when(userMapper.updateUserDtoToUser(UPDATE_USER_DTO)).thenReturn(USER);
         lenient().when(userMapper.userToUpdateUserDto(USER)).thenReturn(UPDATE_USER_DTO);
@@ -89,6 +90,7 @@ class UsersServiceImplTest {
     void getUser() {
         assertEquals(USER_DTO, usersService.getUser());
     }
+
     @Test
     @WithAnonymousUser
     void getAnotherUser() {
