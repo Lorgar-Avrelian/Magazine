@@ -9,6 +9,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -39,13 +40,15 @@ import ru.skypro.homework.service.impl.AuthenticationServiceImpl;
 import ru.skypro.homework.service.impl.ImageServiceImpl;
 import ru.skypro.homework.service.impl.UsersServiceImpl;
 
+import java.io.ByteArrayOutputStream;
 import java.time.Clock;
 import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.anonymous;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -62,6 +65,7 @@ class HomeworkApplicationTest {
     private AdDTO AD_3_DTO = new AdDTO();
     private AdsDTO ADS_DTO = new AdsDTO();
     private AdsDTO ADS_USER_DTO = new AdsDTO();
+    private AdsDTO ADS_ADMIN_DTO = new AdsDTO();
     private CommentDTO COMMENT_1_DTO = new CommentDTO();
     private CommentDTO COMMENT_2_DTO = new CommentDTO();
     private CommentDTO COMMENT_3_DTO = new CommentDTO();
@@ -77,11 +81,15 @@ class HomeworkApplicationTest {
     private ExtendedAdDTO EXTENDED_AD_3_DTO = new ExtendedAdDTO();
     private LoginDTO LOGIN_USER_DTO = new LoginDTO();
     private LoginDTO LOGIN_ADMIN_DTO = new LoginDTO();
+    private LoginDTO LOGIN_ANOTHER_USER_DTO = new LoginDTO();
     private NewPasswordDTO NEW_PASSWORD_USER_DTO = new NewPasswordDTO();
     private NewPasswordDTO NEW_PASSWORD_ANOTHER_USER_DTO = new NewPasswordDTO();
     private NewPasswordDTO NEW_PASSWORD_ADMIN_DTO = new NewPasswordDTO();
     private RegisterDTO REGISTER_USER_DTO = new RegisterDTO();
+    private RegisterDTO REGISTER_ADMIN_DTO = new RegisterDTO();
+    private RegisterDTO REGISTER_ANOTHER_USER_DTO = new RegisterDTO();
     private UpdateUserDTO UPDATE_USER_DTO = new UpdateUserDTO();
+    private UpdateUserDTO UPDATE_ADMIN_DTO = new UpdateUserDTO();
     private UserDTO USER_DTO = new UserDTO();
     private UserDTO ADMIN_DTO = new UserDTO();
     @Autowired
@@ -154,6 +162,8 @@ class HomeworkApplicationTest {
         ADS_DTO.setResults(List.of(AD_1_DTO, AD_2_DTO, AD_3_DTO));
         ADS_USER_DTO.setCount(2);
         ADS_USER_DTO.setResults(List.of(AD_1_DTO, AD_2_DTO));
+        ADS_ADMIN_DTO.setCount(1);
+        ADS_ADMIN_DTO.setResults(List.of(AD_3_DTO));
         COMMENT_1_DTO.setAuthor(COMMENT_1.getAuthor().getId());
         COMMENT_1_DTO.setAuthorImage("/" + COMMENT_1.getAuthorImage());
         COMMENT_1_DTO.setAuthorFirstName(COMMENT_1.getAuthorFirstName());
@@ -217,6 +227,8 @@ class HomeworkApplicationTest {
         LOGIN_USER_DTO.setPassword(USER.getPassword());
         LOGIN_ADMIN_DTO.setUsername(ADMIN.getEmail());
         LOGIN_ADMIN_DTO.setPassword(ADMIN.getPassword());
+        LOGIN_ANOTHER_USER_DTO.setUsername(ANOTHER_USER.getEmail());
+        LOGIN_ANOTHER_USER_DTO.setPassword(ANOTHER_USER.getPassword());
         NEW_PASSWORD_USER_DTO.setCurrentPassword(USER.getPassword());
         NEW_PASSWORD_USER_DTO.setNewPassword(ADMIN.getPassword());
         NEW_PASSWORD_ADMIN_DTO.setCurrentPassword(ADMIN.getPassword());
@@ -229,9 +241,24 @@ class HomeworkApplicationTest {
         REGISTER_USER_DTO.setLastName(USER.getLastName());
         REGISTER_USER_DTO.setPhone(USER.getPhone());
         REGISTER_USER_DTO.setRole(USER.getRole());
+        REGISTER_ADMIN_DTO.setUsername(ADMIN.getEmail());
+        REGISTER_ADMIN_DTO.setPassword(ADMIN.getPassword());
+        REGISTER_ADMIN_DTO.setFirstName(ADMIN.getFirstName());
+        REGISTER_ADMIN_DTO.setLastName(ADMIN.getLastName());
+        REGISTER_ADMIN_DTO.setPhone(ADMIN.getPhone());
+        REGISTER_ADMIN_DTO.setRole(ADMIN.getRole());
+        REGISTER_ANOTHER_USER_DTO.setUsername(ANOTHER_USER.getEmail());
+        REGISTER_ANOTHER_USER_DTO.setPassword(ANOTHER_USER.getPassword());
+        REGISTER_ANOTHER_USER_DTO.setFirstName(ANOTHER_USER.getFirstName());
+        REGISTER_ANOTHER_USER_DTO.setLastName(ANOTHER_USER.getLastName());
+        REGISTER_ANOTHER_USER_DTO.setPhone(ANOTHER_USER.getPhone());
+        REGISTER_ANOTHER_USER_DTO.setRole(ANOTHER_USER.getRole());
         UPDATE_USER_DTO.setFirstName(USER.getFirstName());
         UPDATE_USER_DTO.setLastName(USER.getLastName());
         UPDATE_USER_DTO.setPhone(USER.getPhone());
+        UPDATE_ADMIN_DTO.setFirstName(ADMIN.getFirstName());
+        UPDATE_ADMIN_DTO.setLastName(ADMIN.getLastName());
+        UPDATE_ADMIN_DTO.setPhone(ADMIN.getPhone());
         USER_DTO.setId(USER.getId());
         USER_DTO.setEmail(USER.getEmail());
         USER_DTO.setFirstName(USER.getFirstName());
@@ -252,9 +279,11 @@ class HomeworkApplicationTest {
         lenient().when(userRepository.findByEmail(ADMIN.getEmail())).thenReturn(Optional.of(ADMIN));
         lenient().when(userRepository.save(USER)).thenReturn(USER);
         lenient().when(userRepository.save(ADMIN)).thenReturn(ADMIN);
+        lenient().when(userRepository.save(ANOTHER_USER_REGISTER)).thenReturn(ANOTHER_USER);
         lenient().when(passwordEncoderConfig.passwordEncoder()).thenReturn(passwordEncoder);
         lenient().when(passwordEncoder.encode(USER.getPassword())).thenReturn(USER.getPassword());
         lenient().when(passwordEncoder.encode(ADMIN.getPassword())).thenReturn(ADMIN.getPassword());
+        lenient().when(passwordEncoder.encode(ANOTHER_USER.getPassword())).thenReturn(ANOTHER_USER.getPassword());
         lenient().when(passwordEncoder.matches(USER.getPassword(), USER.getPassword())).thenReturn(true);
         lenient().when(passwordEncoder.matches(ADMIN.getPassword(), ADMIN.getPassword())).thenReturn(true);
         lenient().when(adRepository.findAll()).thenReturn(ADS);
@@ -280,6 +309,20 @@ class HomeworkApplicationTest {
         lenient().doNothing().when(commentRepository).delete(any(Comment.class));
     }
 
+    /**
+     * Should return status code {@link HttpStatus#OK} when password changed. <br>
+     * Should return status code {@link HttpStatus#UNAUTHORIZED} when user isn't authorized. <br>
+     * Should return status code {@link HttpStatus#FORBIDDEN} when current password not equals user password. <br>
+     * <br>
+     * <hr>
+     * <br>
+     * Должен возвращать статус-код {@link HttpStatus#OK}, когда пароль изменён. <br>
+     * Должен возвращать статус-код {@link HttpStatus#UNAUTHORIZED}, когда пользователь не авторизован. <br>
+     * Должен возвращать статус-код {@link HttpStatus#FORBIDDEN}, когда текущий пароль не совпадает с паролем пользователя. <br>
+     * <br>
+     *
+     * @throws Exception
+     */
     @Test
     void setPassword() throws Exception {
         mockMvc.perform(post("/users/set_password")
@@ -304,11 +347,22 @@ class HomeworkApplicationTest {
                .andExpect(status().isForbidden());
     }
 
+    /**
+     * Should return status code {@link HttpStatus#OK} and {@link UserDTO} when user is authorized. <br>
+     * Should return status code {@link HttpStatus#UNAUTHORIZED} when user isn't authorized. <br>
+     * <br>
+     * <hr>
+     * <br>
+     * Должен возвращать статус-код {@link HttpStatus#OK} и {@link UserDTO}, когда пользователь авторизован. <br>
+     * Должен возвращать статус-код {@link HttpStatus#UNAUTHORIZED}, когда пользователь не авторизован. <br>
+     * <br>
+     *
+     * @throws Exception
+     */
     @Test
     void me() throws Exception {
         mockMvc.perform(get("/users/me")
                                 .with(user("user@test.com").password("123"))
-                                .with(csrf())
                                 .accept(MediaType.APPLICATION_JSON_VALUE))
                .andExpect(status().isOk())
                .andExpect(jsonPath("$.id").value(USER_DTO.getId()))
@@ -319,7 +373,6 @@ class HomeworkApplicationTest {
                .andExpect(jsonPath("$.image").value(USER_DTO.getImage()));
         mockMvc.perform(get("/users/me")
                                 .with(user("admin@test.com").password("321"))
-                                .with(csrf())
                                 .accept(MediaType.APPLICATION_JSON_VALUE))
                .andExpect(status().isOk())
                .andExpect(jsonPath("$.id").value(ADMIN_DTO.getId()))
@@ -330,16 +383,26 @@ class HomeworkApplicationTest {
                .andExpect(jsonPath("$.image").value(ADMIN_DTO.getImage()));
         mockMvc.perform(get("/users/me")
                                 .with(anonymous())
-                                .with(csrf())
                                 .accept(MediaType.APPLICATION_JSON_VALUE))
                .andExpect(status().isUnauthorized());
     }
 
+    /**
+     * Should return status code {@link HttpStatus#OK} and {@link UpdateUserDTO} when user is authorized. <br>
+     * Should return status code {@link HttpStatus#UNAUTHORIZED} when user isn't authorized. <br>
+     * <br>
+     * <hr>
+     * <br>
+     * Должен возвращать статус-код {@link HttpStatus#OK} и {@link UpdateUserDTO}, когда пользователь авторизован. <br>
+     * Должен возвращать статус-код {@link HttpStatus#UNAUTHORIZED}, когда пользователь не авторизован. <br>
+     * <br>
+     *
+     * @throws Exception
+     */
     @Test
-    @WithMockUser(value = "user@test.com", username = "user@test.com")
     void meUpdate() throws Exception {
         mockMvc.perform(patch("/users/me")
-                                .with(csrf())
+                                .with(user("user@test.com").password("123"))
                                 .contentType(MediaType.APPLICATION_JSON_VALUE)
                                 .content(new ObjectMapper().writeValueAsString(UPDATE_USER_DTO))
                                 .accept(MediaType.APPLICATION_JSON_VALUE))
@@ -347,36 +410,109 @@ class HomeworkApplicationTest {
                .andExpect(jsonPath("$.firstName").value(UPDATE_USER_DTO.getFirstName()))
                .andExpect(jsonPath("$.lastName").value(UPDATE_USER_DTO.getLastName()))
                .andExpect(jsonPath("$.phone").value(UPDATE_USER_DTO.getPhone()));
+        mockMvc.perform(patch("/users/me")
+                                .with(user("admin@test.com").password("321"))
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(new ObjectMapper().writeValueAsString(UPDATE_ADMIN_DTO))
+                                .accept(MediaType.APPLICATION_JSON_VALUE))
+               .andExpect(status().isOk())
+               .andExpect(jsonPath("$.firstName").value(UPDATE_ADMIN_DTO.getFirstName()))
+               .andExpect(jsonPath("$.lastName").value(UPDATE_ADMIN_DTO.getLastName()))
+               .andExpect(jsonPath("$.phone").value(UPDATE_ADMIN_DTO.getPhone()));
+        mockMvc.perform(patch("/users/me")
+                                .with(anonymous())
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(new ObjectMapper().writeValueAsString(UPDATE_ADMIN_DTO))
+                                .accept(MediaType.APPLICATION_JSON_VALUE))
+               .andExpect(status().isUnauthorized());
     }
 
+    /**
+     * Should return status code {@link HttpStatus#OK} when user is authorized. <br>
+     * Should return status code {@link HttpStatus#UNAUTHORIZED} when user isn't authorized. <br>
+     * <br>
+     * <hr>
+     * <br>
+     * Должен возвращать статус-код {@link HttpStatus#OK}, когда пользователь авторизован. <br>
+     * Должен возвращать статус-код {@link HttpStatus#UNAUTHORIZED}, когда пользователь не авторизован. <br>
+     * <br>
+     *
+     * @throws Exception
+     */
     @Test
     @WithMockUser(value = "user@test.com", username = "user@test.com")
     void meImage() throws Exception {
     }
 
+    /**
+     * Should return status code {@link HttpStatus#OK} when user is authorized. <br>
+     * Should return status code {@link HttpStatus#UNAUTHORIZED} when user isn't authorized. <br>
+     * <br>
+     * <hr>
+     * <br>
+     * Должен возвращать статус-код {@link HttpStatus#OK}, когда пользователь авторизован. <br>
+     * Должен возвращать статус-код {@link HttpStatus#UNAUTHORIZED}, когда пользователь не авторизован. <br>
+     * <br>
+     *
+     * @throws Exception
+     */
     @Test
     void login() throws Exception {
         mockMvc.perform(post("/login")
-                                .with(csrf())
                                 .contentType(MediaType.APPLICATION_JSON_VALUE)
                                 .content(new ObjectMapper().writeValueAsString(LOGIN_USER_DTO)))
                .andExpect(status().isOk());
+        mockMvc.perform(post("/login")
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(new ObjectMapper().writeValueAsString(LOGIN_ADMIN_DTO)))
+               .andExpect(status().isOk());
+        mockMvc.perform(post("/login")
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(new ObjectMapper().writeValueAsString(LOGIN_ANOTHER_USER_DTO)))
+               .andExpect(status().isUnauthorized());
     }
 
+    /**
+     * Should return status code {@link HttpStatus#CREATED} when user is registered. <br>
+     * Should return status code {@link HttpStatus#BAD_REQUEST} when user already registered before. <br>
+     * <br>
+     * <hr>
+     * <br>
+     * Должен возвращать статус-код {@link HttpStatus#CREATED}, когда пользователь зарегистрирован. <br>
+     * Должен возвращать статус-код {@link HttpStatus#BAD_REQUEST}, когда пользователь был зарегистрирован ранее. <br>
+     * <br>
+     *
+     * @throws Exception
+     */
     @Test
     void register() throws Exception {
         mockMvc.perform(post("/register")
-                                .with(csrf())
                                 .contentType(MediaType.APPLICATION_JSON_VALUE)
                                 .content(new ObjectMapper().writeValueAsString(REGISTER_USER_DTO)))
                .andExpect(status().isBadRequest());
+        mockMvc.perform(post("/register")
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(new ObjectMapper().writeValueAsString(REGISTER_ADMIN_DTO)))
+               .andExpect(status().isBadRequest());
+        mockMvc.perform(post("/register")
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(new ObjectMapper().writeValueAsString(REGISTER_ANOTHER_USER_DTO)))
+               .andExpect(status().isCreated());
     }
 
+    /**
+     * Should return status code {@link HttpStatus#OK} and {@link AdsDTO}. <br>
+     * <br>
+     * <hr>
+     * <br>
+     * Должен возвращать статус-код {@link HttpStatus#OK} {@link AdsDTO}. <br>
+     * <br>
+     *
+     * @throws Exception
+     */
     @Test
-    @WithMockUser(value = "user@test.com", username = "user@test.com")
     void getAll() throws Exception {
         mockMvc.perform(get("/ads")
-                                .with(csrf())
                                 .accept(MediaType.APPLICATION_JSON_VALUE))
                .andExpect(status().isOk())
                .andExpect(jsonPath("$.count").value(ADS_DTO.getCount()))
@@ -397,16 +533,40 @@ class HomeworkApplicationTest {
                .andExpect(jsonPath("$.results[2].title").value(AD_3_DTO.getTitle()));
     }
 
+    /**
+     * Should return status code {@link HttpStatus#CREATED} and {@link AdDTO} when ad created. <br>
+     * Should return status code {@link HttpStatus#UNAUTHORIZED} when user isn't authorized. <br>
+     * <br>
+     * <hr>
+     * <br>
+     * Должен возвращать статус-код {@link HttpStatus#CREATED} и {@link AdDTO}, когда объявление создано. <br>
+     * Должен возвращать статус-код {@link HttpStatus#UNAUTHORIZED}, когда пользователь не авторизован. <br>
+     * <br>
+     *
+     * @throws Exception
+     */
     @Test
-    @WithMockUser(value = "user@test.com", username = "user@test.com")
     void postAd() throws Exception {
     }
 
+    /**
+     * Should return status code {@link HttpStatus#OK} and {@link ExtendedAdDTO} when ad is exist. <br>
+     * Should return status code {@link HttpStatus#UNAUTHORIZED} when user isn't authorized. <br>
+     * Should return status code {@link HttpStatus#NOT_FOUND} when ad isn't exist. <br>
+     * <br>
+     * <hr>
+     * <br>
+     * Должен возвращать статус-код {@link HttpStatus#OK} и {@link ExtendedAdDTO}, когда объявление существует. <br>
+     * Должен возвращать статус-код {@link HttpStatus#UNAUTHORIZED}, когда пользователь не авторизован. <br>
+     * Должен возвращать статус-код {@link HttpStatus#NOT_FOUND}, когда объявление не существует. <br>
+     * <br>
+     *
+     * @throws Exception
+     */
     @Test
-    @WithMockUser(value = "user@test.com", username = "user@test.com")
     void getAd() throws Exception {
         mockMvc.perform(get("/ads/1")
-                                .with(csrf())
+                                .with(user("user@test.com").password("123"))
                                 .accept(MediaType.APPLICATION_JSON_VALUE))
                .andExpect(status().isOk())
                .andExpect(jsonPath("$.pk").value(EXTENDED_AD_1_DTO.getPk()))
@@ -418,37 +578,140 @@ class HomeworkApplicationTest {
                .andExpect(jsonPath("$.phone").value(EXTENDED_AD_1_DTO.getPhone()))
                .andExpect(jsonPath("$.price").value(EXTENDED_AD_1_DTO.getPrice()))
                .andExpect(jsonPath("$.title").value(EXTENDED_AD_1_DTO.getTitle()));
-    }
-
-    @Test
-    @WithMockUser(value = "user@test.com", username = "user@test.com")
-    void deleteAd() throws Exception {
-        mockMvc.perform(delete("/ads/1")
-                                .with(csrf()))
-               .andExpect(status().isNoContent());
-    }
-
-    @Test
-    @WithMockUser(value = "user@test.com", username = "user@test.com")
-    void updateAd() throws Exception {
-        mockMvc.perform(patch("/ads/1")
-                                .with(csrf())
-                                .contentType(MediaType.APPLICATION_JSON_VALUE)
-                                .content(new ObjectMapper().writeValueAsString(CREATE_OR_UPDATE_AD_1_DTO))
+        mockMvc.perform(get("/ads/1")
+                                .with(user("admin@test.com").password("321"))
                                 .accept(MediaType.APPLICATION_JSON_VALUE))
                .andExpect(status().isOk())
-               .andExpect(jsonPath("$.author").value(AD_1_DTO.getAuthor()))
-               .andExpect(jsonPath("$.image").value(AD_1_DTO.getImage()))
-               .andExpect(jsonPath("$.pk").value(AD_1_DTO.getPk()))
-               .andExpect(jsonPath("$.price").value(AD_1_DTO.getPrice()))
-               .andExpect(jsonPath("$.title").value(AD_1_DTO.getTitle()));
+               .andExpect(jsonPath("$.pk").value(EXTENDED_AD_1_DTO.getPk()))
+               .andExpect(jsonPath("$.authorFirstName").value(EXTENDED_AD_1_DTO.getAuthorFirstName()))
+               .andExpect(jsonPath("$.authorLastName").value(EXTENDED_AD_1_DTO.getAuthorLastName()))
+               .andExpect(jsonPath("$.description").value(EXTENDED_AD_1_DTO.getDescription()))
+               .andExpect(jsonPath("$.email").value(EXTENDED_AD_1_DTO.getEmail()))
+               .andExpect(jsonPath("$.image").value(EXTENDED_AD_1_DTO.getImage()))
+               .andExpect(jsonPath("$.phone").value(EXTENDED_AD_1_DTO.getPhone()))
+               .andExpect(jsonPath("$.price").value(EXTENDED_AD_1_DTO.getPrice()))
+               .andExpect(jsonPath("$.title").value(EXTENDED_AD_1_DTO.getTitle()));
+        mockMvc.perform(get("/ads/1")
+                                .with(anonymous())
+                                .accept(MediaType.APPLICATION_JSON_VALUE))
+               .andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/ads/4")
+                                .with(user("user@test.com").password("123"))
+                                .accept(MediaType.APPLICATION_JSON_VALUE))
+               .andExpect(status().isNotFound());
     }
 
+    /**
+     * Should return status code {@link HttpStatus#NO_CONTENT} when ad is deleted. <br>
+     * Should return status code {@link HttpStatus#UNAUTHORIZED} when user isn't authorized. <br>
+     * Should return status code {@link HttpStatus#FORBIDDEN} when user doesn't have such rights. <br>
+     * Should return status code {@link HttpStatus#NOT_FOUND} when ad isn't exist. <br>
+     * <br>
+     * <hr>
+     * <br>
+     * Должен возвращать статус-код {@link HttpStatus#NO_CONTENT}, когда объявление удалено. <br>
+     * Должен возвращать статус-код {@link HttpStatus#UNAUTHORIZED}, когда пользователь не авторизован. <br>
+     * Должен возвращать статус-код {@link HttpStatus#FORBIDDEN}, когда пользователь не имеет таких прав. <br>
+     * Должен возвращать статус-код {@link HttpStatus#NOT_FOUND}, когда объявление не существует. <br>
+     * <br>
+     *
+     * @throws Exception
+     */
     @Test
-    @WithMockUser(value = "user@test.com", username = "user@test.com")
+    void deleteAd() throws Exception {
+        mockMvc.perform(delete("/ads/1")
+                                .with(user("user@test.com").password("123")))
+               .andExpect(status().isNoContent());
+        mockMvc.perform(delete("/ads/1")
+                                .with(user("admin@test.com").password("321")))
+               .andExpect(status().isNoContent());
+        mockMvc.perform(delete("/ads/1")
+                                .with(anonymous()))
+               .andExpect(status().isUnauthorized());
+        mockMvc.perform(delete("/ads/3")
+                                .with(user("user@test.com").password("123")))
+               .andExpect(status().isForbidden());
+        mockMvc.perform(delete("/ads/4")
+                                .with(user("user@test.com").password("123")))
+               .andExpect(status().isNotFound());
+    }
+
+    /**
+     * Should return status code {@link HttpStatus#OK} and {@link AdDTO} when ad is updated. <br>
+     * Should return status code {@link HttpStatus#UNAUTHORIZED} when user isn't authorized. <br>
+     * Should return status code {@link HttpStatus#FORBIDDEN} when user doesn't have such rights. <br>
+     * Should return status code {@link HttpStatus#NOT_FOUND} when ad isn't exist. <br>
+     * <br>
+     * <hr>
+     * <br>
+     * Должен возвращать статус-код {@link HttpStatus#OK} и {@link AdDTO}, когда объявление обновлено. <br>
+     * Должен возвращать статус-код {@link HttpStatus#UNAUTHORIZED}, когда пользователь не авторизован. <br>
+     * Должен возвращать статус-код {@link HttpStatus#FORBIDDEN}, когда пользователь не имеет таких прав. <br>
+     * Должен возвращать статус-код {@link HttpStatus#NOT_FOUND}, когда объявление не существует. <br>
+     * <br>
+     *
+     * @throws Exception
+     */
+    @Test
+    void updateAd() throws Exception {
+        mockMvc.perform(patch("/ads/2")
+                                .with(user("user@test.com").password("123"))
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(new ObjectMapper().writeValueAsString(CREATE_OR_UPDATE_AD_2_DTO))
+                                .accept(MediaType.APPLICATION_JSON_VALUE))
+               .andExpect(status().isOk())
+               .andExpect(jsonPath("$.author").value(AD_2_DTO.getAuthor()))
+               .andExpect(jsonPath("$.image").value(AD_2_DTO.getImage()))
+               .andExpect(jsonPath("$.pk").value(AD_2_DTO.getPk()))
+               .andExpect(jsonPath("$.price").value(AD_2_DTO.getPrice()))
+               .andExpect(jsonPath("$.title").value(AD_2_DTO.getTitle()));
+        mockMvc.perform(patch("/ads/2")
+                                .with(user("admin@test.com").password("321"))
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(new ObjectMapper().writeValueAsString(CREATE_OR_UPDATE_AD_2_DTO))
+                                .accept(MediaType.APPLICATION_JSON_VALUE))
+               .andExpect(status().isOk())
+               .andExpect(jsonPath("$.author").value(AD_2_DTO.getAuthor()))
+               .andExpect(jsonPath("$.image").value(AD_2_DTO.getImage()))
+               .andExpect(jsonPath("$.pk").value(AD_2_DTO.getPk()))
+               .andExpect(jsonPath("$.price").value(AD_2_DTO.getPrice()))
+               .andExpect(jsonPath("$.title").value(AD_2_DTO.getTitle()));
+        mockMvc.perform(patch("/ads/2")
+                                .with(anonymous())
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(new ObjectMapper().writeValueAsString(CREATE_OR_UPDATE_AD_2_DTO))
+                                .accept(MediaType.APPLICATION_JSON_VALUE))
+               .andExpect(status().isUnauthorized());
+        mockMvc.perform(patch("/ads/3")
+                                .with(user("user@test.com").password("123"))
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(new ObjectMapper().writeValueAsString(CREATE_OR_UPDATE_AD_2_DTO))
+                                .accept(MediaType.APPLICATION_JSON_VALUE))
+               .andExpect(status().isForbidden());
+        mockMvc.perform(patch("/ads/4")
+                                .with(user("user@test.com").password("123"))
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(new ObjectMapper().writeValueAsString(CREATE_OR_UPDATE_AD_2_DTO))
+                                .accept(MediaType.APPLICATION_JSON_VALUE))
+               .andExpect(status().isNotFound());
+    }
+
+    /**
+     * Should return status code {@link HttpStatus#OK} and {@link AdsDTO} when user is authorized. <br>
+     * Should return status code {@link HttpStatus#UNAUTHORIZED} when user isn't authorized. <br>
+     * <br>
+     * <hr>
+     * <br>
+     * Должен возвращать статус-код {@link HttpStatus#OK} и {@link AdsDTO}, когда пользователь авторизован. <br>
+     * Должен возвращать статус-код {@link HttpStatus#UNAUTHORIZED}, когда пользователь не авторизован. <br>
+     * <br>
+     *
+     * @throws Exception
+     */
+    @Test
     void getMe() throws Exception {
         mockMvc.perform(get("/ads/me")
-                                .with(csrf())
+                                .with(user("user@test.com").password("123"))
                                 .accept(MediaType.APPLICATION_JSON_VALUE))
                .andExpect(status().isOk())
                .andExpect(jsonPath("$.count").value(ADS_USER_DTO.getCount()))
@@ -462,18 +725,60 @@ class HomeworkApplicationTest {
                .andExpect(jsonPath("$.results[1].pk").value(AD_2_DTO.getPk()))
                .andExpect(jsonPath("$.results[1].price").value(AD_2_DTO.getPrice()))
                .andExpect(jsonPath("$.results[1].title").value(AD_2_DTO.getTitle()));
+        mockMvc.perform(get("/ads/me")
+                                .with(user("admin@test.com").password("321"))
+                                .accept(MediaType.APPLICATION_JSON_VALUE))
+               .andExpect(status().isOk())
+               .andExpect(jsonPath("$.count").value(ADS_ADMIN_DTO.getCount()))
+               .andExpect(jsonPath("$.results[0].author").value(AD_3_DTO.getAuthor()))
+               .andExpect(jsonPath("$.results[0].image").value(AD_3_DTO.getImage()))
+               .andExpect(jsonPath("$.results[0].pk").value(AD_3_DTO.getPk()))
+               .andExpect(jsonPath("$.results[0].price").value(AD_3_DTO.getPrice()))
+               .andExpect(jsonPath("$.results[0].title").value(AD_3_DTO.getTitle()));
+        mockMvc.perform(get("/ads/me")
+                                .with(anonymous())
+                                .accept(MediaType.APPLICATION_JSON_VALUE))
+               .andExpect(status().isUnauthorized());
     }
 
+    /**
+     * Should return status code {@link HttpStatus#OK} and {@link String} when ad image is updated. <br>
+     * Should return status code {@link HttpStatus#UNAUTHORIZED} when user isn't authorized. <br>
+     * Should return status code {@link HttpStatus#FORBIDDEN} when user doesn't have such rights. <br>
+     * Should return status code {@link HttpStatus#NOT_FOUND} when ad isn't exist. <br>
+     * <br>
+     * <hr>
+     * <br>
+     * Должен возвращать статус-код {@link HttpStatus#OK} и {@link String}, когда изображение объявления обновлено. <br>
+     * Должен возвращать статус-код {@link HttpStatus#UNAUTHORIZED}, когда пользователь не авторизован. <br>
+     * Должен возвращать статус-код {@link HttpStatus#FORBIDDEN}, когда пользователь не имеет таких прав. <br>
+     * Должен возвращать статус-код {@link HttpStatus#NOT_FOUND}, когда объявление не существует. <br>
+     * <br>
+     *
+     * @throws Exception
+     */
     @Test
-    @WithMockUser(value = "user@test.com", username = "user@test.com")
     void patchAdImage() throws Exception {
     }
 
+    /**
+     * Should return status code {@link HttpStatus#OK} and {@link CommentsDTO} when ad comments are exist. <br>
+     * Should return status code {@link HttpStatus#UNAUTHORIZED} when user isn't authorized. <br>
+     * Should return status code {@link HttpStatus#NOT_FOUND} when ad comments are not exist. <br>
+     * <br>
+     * <hr>
+     * <br>
+     * Должен возвращать статус-код {@link HttpStatus#OK} и {@link CommentsDTO}, когда комментарии к объявлению существуют. <br>
+     * Должен возвращать статус-код {@link HttpStatus#UNAUTHORIZED}, когда пользователь не авторизован. <br>
+     * Должен возвращать статус-код {@link HttpStatus#NOT_FOUND}, когда комментарии к объявлению не существуют. <br>
+     * <br>
+     *
+     * @throws Exception
+     */
     @Test
-    @WithMockUser(value = "user@test.com", username = "user@test.com")
     void getAdComments() throws Exception {
         mockMvc.perform(get("/ads/1/comments")
-                                .with(csrf())
+                                .with(user("user@test.com").password("123"))
                                 .accept(MediaType.APPLICATION_JSON_VALUE))
                .andExpect(status().isOk())
                .andExpect(jsonPath("$.count").value(COMMENTS_DTO.getCount()))
@@ -495,13 +800,57 @@ class HomeworkApplicationTest {
                .andExpect(jsonPath("$.results[2].createdAt").value(COMMENT_3_DTO.getCreatedAt()))
                .andExpect(jsonPath("$.results[2].pk").value(COMMENT_3_DTO.getPk()))
                .andExpect(jsonPath("$.results[2].text").value(COMMENT_3_DTO.getText()));
+        mockMvc.perform(get("/ads/1/comments")
+                                .with(user("admin@test.com").password("321"))
+                                .accept(MediaType.APPLICATION_JSON_VALUE))
+               .andExpect(status().isOk())
+               .andExpect(jsonPath("$.count").value(COMMENTS_DTO.getCount()))
+               .andExpect(jsonPath("$.results[0].author").value(COMMENT_1_DTO.getAuthor()))
+               .andExpect(jsonPath("$.results[0].authorImage").value(COMMENT_1_DTO.getAuthorImage()))
+               .andExpect(jsonPath("$.results[0].authorFirstName").value(COMMENT_1_DTO.getAuthorFirstName()))
+               .andExpect(jsonPath("$.results[0].createdAt").value(COMMENT_1_DTO.getCreatedAt()))
+               .andExpect(jsonPath("$.results[0].pk").value(COMMENT_1_DTO.getPk()))
+               .andExpect(jsonPath("$.results[0].text").value(COMMENT_1_DTO.getText()))
+               .andExpect(jsonPath("$.results[1].author").value(COMMENT_2_DTO.getAuthor()))
+               .andExpect(jsonPath("$.results[1].authorImage").value(COMMENT_2_DTO.getAuthorImage()))
+               .andExpect(jsonPath("$.results[1].authorFirstName").value(COMMENT_2_DTO.getAuthorFirstName()))
+               .andExpect(jsonPath("$.results[1].createdAt").value(COMMENT_2_DTO.getCreatedAt()))
+               .andExpect(jsonPath("$.results[1].pk").value(COMMENT_2_DTO.getPk()))
+               .andExpect(jsonPath("$.results[1].text").value(COMMENT_2_DTO.getText()))
+               .andExpect(jsonPath("$.results[2].author").value(COMMENT_3_DTO.getAuthor()))
+               .andExpect(jsonPath("$.results[2].authorImage").value(COMMENT_3_DTO.getAuthorImage()))
+               .andExpect(jsonPath("$.results[2].authorFirstName").value(COMMENT_3_DTO.getAuthorFirstName()))
+               .andExpect(jsonPath("$.results[2].createdAt").value(COMMENT_3_DTO.getCreatedAt()))
+               .andExpect(jsonPath("$.results[2].pk").value(COMMENT_3_DTO.getPk()))
+               .andExpect(jsonPath("$.results[2].text").value(COMMENT_3_DTO.getText()));
+        mockMvc.perform(get("/ads/1/comments")
+                                .with(anonymous())
+                                .accept(MediaType.APPLICATION_JSON_VALUE))
+               .andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/ads/2/comments")
+                                .with(user("user@test.com").password("123"))
+                                .accept(MediaType.APPLICATION_JSON_VALUE))
+               .andExpect(status().isNotFound());
     }
 
+    /**
+     * Should return status code {@link HttpStatus#OK} and {@link CommentDTO} when ad comment is added. <br>
+     * Should return status code {@link HttpStatus#UNAUTHORIZED} when user isn't authorized. <br>
+     * Should return status code {@link HttpStatus#NOT_FOUND} when ad isn't exist. <br>
+     * <br>
+     * <hr>
+     * <br>
+     * Должен возвращать статус-код {@link HttpStatus#OK} и {@link CommentDTO}, когда комментарий к объявлению добавлен. <br>
+     * Должен возвращать статус-код {@link HttpStatus#UNAUTHORIZED}, когда пользователь не авторизован. <br>
+     * Должен возвращать статус-код {@link HttpStatus#NOT_FOUND}, когда объявление не существует. <br>
+     * <br>
+     *
+     * @throws Exception
+     */
     @Test
-    @WithMockUser(value = "user@test.com", username = "user@test.com")
     void postAdComment() throws Exception {
         mockMvc.perform(post("/ads/1/comments")
-                                .with(csrf())
+                                .with(user("user@test.com").password("123"))
                                 .contentType(MediaType.APPLICATION_JSON_VALUE)
                                 .content(new ObjectMapper().writeValueAsString(CREATE_OR_UPDATE_COMMENT_1_DTO))
                                 .accept(MediaType.APPLICATION_JSON_VALUE))
@@ -512,22 +861,96 @@ class HomeworkApplicationTest {
                .andExpect(jsonPath("$.createdAt").value(COMMENT_1_DTO.getCreatedAt()))
                .andExpect(jsonPath("$.pk").value(COMMENT_1_DTO.getPk()))
                .andExpect(jsonPath("$.text").value(COMMENT_1_DTO.getText()));
+        mockMvc.perform(post("/ads/1/comments")
+                                .with(user("admin@test.com").password("321"))
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(new ObjectMapper().writeValueAsString(CREATE_OR_UPDATE_COMMENT_3_DTO))
+                                .accept(MediaType.APPLICATION_JSON_VALUE))
+               .andExpect(status().isOk())
+               .andExpect(jsonPath("$.author").value(COMMENT_3_DTO.getAuthor()))
+               .andExpect(jsonPath("$.authorImage").value(COMMENT_3_DTO.getAuthorImage()))
+               .andExpect(jsonPath("$.authorFirstName").value(COMMENT_3_DTO.getAuthorFirstName()))
+               .andExpect(jsonPath("$.createdAt").value(COMMENT_3_DTO.getCreatedAt()))
+               .andExpect(jsonPath("$.pk").value(COMMENT_3_DTO.getPk()))
+               .andExpect(jsonPath("$.text").value(COMMENT_3_DTO.getText()));
+        mockMvc.perform(post("/ads/3/comments")
+                                .with(anonymous())
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(new ObjectMapper().writeValueAsString(CREATE_OR_UPDATE_COMMENT_1_DTO))
+                                .accept(MediaType.APPLICATION_JSON_VALUE))
+               .andExpect(status().isUnauthorized());
+        mockMvc.perform(post("/ads/4/comments")
+                                .with(user("user@test.com").password("123"))
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(new ObjectMapper().writeValueAsString(CREATE_OR_UPDATE_COMMENT_1_DTO))
+                                .accept(MediaType.APPLICATION_JSON_VALUE))
+               .andExpect(status().isNotFound());
     }
 
+    /**
+     * Should return status code {@link HttpStatus#OK} when ad comment is deleted. <br>
+     * Should return status code {@link HttpStatus#UNAUTHORIZED} when user isn't authorized. <br>
+     * Should return status code {@link HttpStatus#FORBIDDEN} when user doesn't have such rights. <br>
+     * Should return status code {@link HttpStatus#NOT_FOUND} when ad comment isn't exist. <br>
+     * <br>
+     * <hr>
+     * <br>
+     * Должен возвращать статус-код {@link HttpStatus#OK}, когда комментарий к объявлению удалён. <br>
+     * Должен возвращать статус-код {@link HttpStatus#UNAUTHORIZED}, когда пользователь не авторизован. <br>
+     * Должен возвращать статус-код {@link HttpStatus#FORBIDDEN}, когда пользователь не имеет таких прав. <br>
+     * Должен возвращать статус-код {@link HttpStatus#NOT_FOUND}, когда комментарий к объявлению не существует. <br>
+     * <br>
+     *
+     * @throws Exception
+     */
     @Test
-    @WithMockUser(value = "user@test.com", username = "user@test.com")
     void deleteAdComment() throws Exception {
         mockMvc.perform(delete("/ads/1/comments/1")
-                                .with(csrf())
+                                .with(user("user@test.com").password("123"))
                                 .accept(MediaType.APPLICATION_JSON_VALUE))
                .andExpect(status().isOk());
+        mockMvc.perform(delete("/ads/1/comments/1")
+                                .with(user("admin@test.com").password("321"))
+                                .accept(MediaType.APPLICATION_JSON_VALUE))
+               .andExpect(status().isOk());
+        mockMvc.perform(delete("/ads/1/comments/1")
+                                .with(anonymous())
+                                .accept(MediaType.APPLICATION_JSON_VALUE))
+               .andExpect(status().isUnauthorized());
+        mockMvc.perform(delete("/ads/1/comments/3")
+                                .with(user("user@test.com").password("123"))
+                                .accept(MediaType.APPLICATION_JSON_VALUE))
+               .andExpect(status().isForbidden());
+        mockMvc.perform(delete("/ads/2/comments/1")
+                                .with(user("user@test.com").password("123"))
+                                .accept(MediaType.APPLICATION_JSON_VALUE))
+               .andExpect(status().isNotFound());
+        mockMvc.perform(delete("/ads/1/comments/4")
+                                .with(user("user@test.com").password("123"))
+                                .accept(MediaType.APPLICATION_JSON_VALUE))
+               .andExpect(status().isNotFound());
     }
 
+    /**
+     * Should return status code {@link HttpStatus#OK} and {@link CommentDTO} when ad comment is updated. <br>
+     * Should return status code {@link HttpStatus#UNAUTHORIZED} when user isn't authorized. <br>
+     * Should return status code {@link HttpStatus#FORBIDDEN} when user doesn't have such rights. <br>
+     * Should return status code {@link HttpStatus#NOT_FOUND} when ad comment isn't exist. <br>
+     * <br>
+     * <hr>
+     * <br>
+     * Должен возвращать статус-код {@link HttpStatus#OK} и {@link CommentDTO}, когда комментарий к объявлению обновлён. <br>
+     * Должен возвращать статус-код {@link HttpStatus#UNAUTHORIZED}, когда пользователь не авторизован. <br>
+     * Должен возвращать статус-код {@link HttpStatus#FORBIDDEN}, когда пользователь не имеет таких прав. <br>
+     * Должен возвращать статус-код {@link HttpStatus#NOT_FOUND}, когда комментарий к объявлению не существует. <br>
+     * <br>
+     *
+     * @throws Exception
+     */
     @Test
-    @WithMockUser(value = "user@test.com", username = "user@test.com")
     void updateAdComment() throws Exception {
         mockMvc.perform(patch("/ads/1/comments/1")
-                                .with(csrf())
+                                .with(user("user@test.com").password("123"))
                                 .contentType(MediaType.APPLICATION_JSON_VALUE)
                                 .content(new ObjectMapper().writeValueAsString(CREATE_OR_UPDATE_COMMENT_1_DTO))
                                 .accept(MediaType.APPLICATION_JSON_VALUE))
@@ -538,8 +961,56 @@ class HomeworkApplicationTest {
                .andExpect(jsonPath("$.createdAt").value(COMMENT_1_DTO.getCreatedAt()))
                .andExpect(jsonPath("$.pk").value(COMMENT_1_DTO.getPk()))
                .andExpect(jsonPath("$.text").value(COMMENT_1_DTO.getText()));
+        mockMvc.perform(patch("/ads/1/comments/1")
+                                .with(user("admin@test.com").password("321"))
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(new ObjectMapper().writeValueAsString(CREATE_OR_UPDATE_COMMENT_1_DTO))
+                                .accept(MediaType.APPLICATION_JSON_VALUE))
+               .andExpect(status().isOk())
+               .andExpect(jsonPath("$.author").value(COMMENT_1_DTO.getAuthor()))
+               .andExpect(jsonPath("$.authorImage").value(COMMENT_1_DTO.getAuthorImage()))
+               .andExpect(jsonPath("$.authorFirstName").value(COMMENT_1_DTO.getAuthorFirstName()))
+               .andExpect(jsonPath("$.createdAt").value(COMMENT_1_DTO.getCreatedAt()))
+               .andExpect(jsonPath("$.pk").value(COMMENT_1_DTO.getPk()))
+               .andExpect(jsonPath("$.text").value(COMMENT_1_DTO.getText()));
+        mockMvc.perform(patch("/ads/1/comments/1")
+                                .with(anonymous())
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(new ObjectMapper().writeValueAsString(CREATE_OR_UPDATE_COMMENT_1_DTO))
+                                .accept(MediaType.APPLICATION_JSON_VALUE))
+               .andExpect(status().isUnauthorized());
+        mockMvc.perform(patch("/ads/1/comments/3")
+                                .with(user("user@test.com").password("123"))
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(new ObjectMapper().writeValueAsString(CREATE_OR_UPDATE_COMMENT_3_DTO))
+                                .accept(MediaType.APPLICATION_JSON_VALUE))
+               .andExpect(status().isForbidden());
+        mockMvc.perform(patch("/ads/2/comments/1")
+                                .with(user("user@test.com").password("123"))
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(new ObjectMapper().writeValueAsString(CREATE_OR_UPDATE_COMMENT_1_DTO))
+                                .accept(MediaType.APPLICATION_JSON_VALUE))
+               .andExpect(status().isNotFound());
+        mockMvc.perform(patch("/ads/1/comments/4")
+                                .with(user("user@test.com").password("123"))
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                                .content(new ObjectMapper().writeValueAsString(CREATE_OR_UPDATE_COMMENT_1_DTO))
+                                .accept(MediaType.APPLICATION_JSON_VALUE))
+               .andExpect(status().isNotFound());
     }
 
+    /**
+     * Should return status code {@link HttpStatus#OK} and {@link ByteArrayOutputStream} when image is exist. <br>
+     * Should return status code {@link HttpStatus#BAD_REQUEST} when image isn't exist. <br>
+     * <br>
+     * <hr>
+     * <br>
+     * Должен возвращать статус-код {@link HttpStatus#OK} и {@link ByteArrayOutputStream}, когда изображение существует. <br>
+     * Должен возвращать статус-код {@link HttpStatus#BAD_REQUEST}, когда изображение не существует. <br>
+     * <br>
+     *
+     * @throws Exception
+     */
     @Test
     void downloadImage() throws Exception {
     }

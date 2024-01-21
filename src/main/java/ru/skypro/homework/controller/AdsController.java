@@ -6,9 +6,11 @@ import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import org.apache.log4j.Logger;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import ru.skypro.homework.dto.*;
@@ -30,6 +32,7 @@ import javax.validation.Valid;
 @RequestMapping(path = "/ads")
 public class AdsController {
     private final AdsServiceImpl adsService;
+    private static final Logger log = Logger.getLogger(AdsController.class);
 
     public AdsController(AdsServiceImpl adsService) {
         this.adsService = adsService;
@@ -231,7 +234,14 @@ public class AdsController {
     )
     @DeleteMapping(path = "/{id}")
     public ResponseEntity<?> deleteAd(@Parameter(description = "ID объявления", example = "1") @PathVariable Integer id) {
-        if (adsService.deleteAd(id)) {
+        boolean delete;
+        try {
+            delete = adsService.deleteAd(id);
+        } catch (UsernameNotFoundException e) {
+            log.error(e.getMessage());
+            return ResponseEntity.status(403).build();
+        }
+        if (delete) {
             return ResponseEntity.status(204).build();
         } else {
             return ResponseEntity.status(404).build();
@@ -307,7 +317,13 @@ public class AdsController {
     )
     @PatchMapping(path = "/{id}")
     public ResponseEntity<AdDTO> updateAd(@Parameter(description = "ID объявления", example = "1") @PathVariable Integer id, @RequestBody CreateOrUpdateAdDTO createOrUpdateAdDTO) {
-        AdDTO adDTO = adsService.updateAd(id, createOrUpdateAdDTO);
+        AdDTO adDTO;
+        try {
+            adDTO = adsService.updateAd(id, createOrUpdateAdDTO);
+        } catch (UsernameNotFoundException e) {
+            log.error(e.getMessage());
+            return ResponseEntity.status(403).build();
+        }
         if (adDTO == null) {
             return ResponseEntity.status(404).build();
         } else {
@@ -434,7 +450,7 @@ public class AdsController {
             }
     )
     @PatchMapping(path = "/{id}/image", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
-    public ResponseEntity<String> patchAdImage(@RequestPart @Valid Integer id, @RequestBody MultipartFile image) {
+    public ResponseEntity<String> patchAdImage(@PathVariable Integer id, @RequestBody MultipartFile image) {
         String imageUrl = adsService.updateAdImage(id, image);
         if (imageUrl != null) {
             return ResponseEntity.ok(imageUrl);
@@ -634,7 +650,14 @@ public class AdsController {
     )
     @DeleteMapping(path = "/{adId}/comments/{commentId}")
     public ResponseEntity<?> deleteAdComment(@Parameter(description = "ID объявления", example = "1") @PathVariable Integer adId, @Parameter(description = "ID комментария", example = "1") @PathVariable Integer commentId) {
-        if (adsService.deleteComment(adId, commentId)) {
+        boolean delete;
+        try {
+            delete = adsService.deleteComment(adId, commentId);
+        } catch (UsernameNotFoundException e) {
+            log.error(e.getMessage());
+            return ResponseEntity.status(403).build();
+        }
+        if (delete) {
             return ResponseEntity.ok().build();
         } else {
             return ResponseEntity.status(404).build();
@@ -711,7 +734,13 @@ public class AdsController {
     )
     @PatchMapping(path = "/{adId}/comments/{commentId}")
     public ResponseEntity<CommentDTO> updateAdComment(@Parameter(description = "ID объявления", example = "1") @PathVariable Integer adId, @Parameter(description = "ID комментария", example = "1") @PathVariable Integer commentId, @RequestBody CreateOrUpdateCommentDTO createOrUpdateCommentDTO) {
-        CommentDTO commentDTO = adsService.updateComment(adId, commentId, createOrUpdateCommentDTO);
+        CommentDTO commentDTO;
+        try {
+            commentDTO = adsService.updateComment(adId, commentId, createOrUpdateCommentDTO);
+        } catch (UsernameNotFoundException e) {
+            log.error(e.getMessage());
+            return ResponseEntity.status(403).build();
+        }
         if (commentDTO != null) {
             return ResponseEntity.ok(commentDTO);
         } else {

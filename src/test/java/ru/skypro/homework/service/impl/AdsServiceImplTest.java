@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
@@ -220,7 +221,8 @@ class AdsServiceImplTest {
     void deleteAdByUser() {
         assertTrue(adsService.deleteAd(1));
         assertTrue(adsService.deleteAd(2));
-        assertFalse(adsService.deleteAd(3));
+        assertThrows(UsernameNotFoundException.class, () -> adsService.deleteAd(3));
+        assertFalse(adsService.deleteAd(4));
     }
 
     @Test
@@ -229,6 +231,7 @@ class AdsServiceImplTest {
         assertTrue(adsService.deleteAd(1));
         assertTrue(adsService.deleteAd(2));
         assertTrue(adsService.deleteAd(3));
+        assertFalse(adsService.deleteAd(4));
     }
 
     @Test
@@ -244,7 +247,7 @@ class AdsServiceImplTest {
     void updateAdWithUser() {
         assertEquals(AD_1_DTO, adsService.updateAd(1, CREATE_OR_UPDATE_AD_1_DTO));
         assertEquals(AD_2_DTO, adsService.updateAd(2, CREATE_OR_UPDATE_AD_2_DTO));
-        assertNotEquals(AD_3_DTO, adsService.updateAd(3, CREATE_OR_UPDATE_AD_3_DTO));
+        assertThrows(UsernameNotFoundException.class, () -> adsService.updateAd(3, CREATE_OR_UPDATE_AD_3_DTO));
     }
 
     @Test
@@ -300,7 +303,9 @@ class AdsServiceImplTest {
     void deleteCommentWithUser() {
         assertTrue(adsService.deleteComment(1, 1));
         assertTrue(adsService.deleteComment(1, 2));
-        assertFalse(adsService.deleteComment(1, 3));
+        assertThrows(UsernameNotFoundException.class, () -> adsService.deleteComment(1, 3));
+        assertFalse(adsService.deleteComment(1, 4));
+        assertFalse(adsService.deleteComment(2, 1));
     }
 
     @Test
@@ -309,6 +314,8 @@ class AdsServiceImplTest {
         assertTrue(adsService.deleteComment(1, 1));
         assertTrue(adsService.deleteComment(1, 2));
         assertTrue(adsService.deleteComment(1, 3));
+        assertFalse(adsService.deleteComment(1, 4));
+        assertFalse(adsService.deleteComment(2, 1));
     }
 
     @Test
@@ -317,6 +324,8 @@ class AdsServiceImplTest {
         assertFalse(adsService.deleteComment(1, 1));
         assertFalse(adsService.deleteComment(1, 2));
         assertFalse(adsService.deleteComment(1, 3));
+        assertFalse(adsService.deleteComment(1, 4));
+        assertFalse(adsService.deleteComment(2, 1));
     }
 
     @Test
@@ -324,7 +333,9 @@ class AdsServiceImplTest {
     void updateCommentWithUser() {
         assertEquals(COMMENT_1_DTO, adsService.updateComment(1, 1, CREATE_OR_UPDATE_COMMENT_1_DTO));
         assertEquals(COMMENT_2_DTO, adsService.updateComment(1, 2, CREATE_OR_UPDATE_COMMENT_2_DTO));
-        assertNull(adsService.updateComment(1, 3, CREATE_OR_UPDATE_COMMENT_3_DTO));
+        assertThrows(UsernameNotFoundException.class, () -> adsService.updateComment(1, 3, CREATE_OR_UPDATE_COMMENT_3_DTO));
+        assertNull(adsService.updateComment(1, 4, CREATE_OR_UPDATE_COMMENT_1_DTO));
+        assertNull(adsService.updateComment(2, 1, CREATE_OR_UPDATE_COMMENT_1_DTO));
     }
 
     @Test
@@ -333,6 +344,8 @@ class AdsServiceImplTest {
         assertEquals(COMMENT_1_DTO, adsService.updateComment(1, 1, CREATE_OR_UPDATE_COMMENT_1_DTO));
         assertEquals(COMMENT_2_DTO, adsService.updateComment(1, 2, CREATE_OR_UPDATE_COMMENT_2_DTO));
         assertEquals(COMMENT_3_DTO, adsService.updateComment(1, 3, CREATE_OR_UPDATE_COMMENT_3_DTO));
+        assertNull(adsService.updateComment(1, 4, CREATE_OR_UPDATE_COMMENT_1_DTO));
+        assertNull(adsService.updateComment(2, 1, CREATE_OR_UPDATE_COMMENT_1_DTO));
     }
 
     @Test
@@ -341,5 +354,7 @@ class AdsServiceImplTest {
         assertNull(adsService.updateComment(1, 1, CREATE_OR_UPDATE_COMMENT_1_DTO));
         assertNull(adsService.updateComment(1, 2, CREATE_OR_UPDATE_COMMENT_2_DTO));
         assertNull(adsService.updateComment(1, 3, CREATE_OR_UPDATE_COMMENT_3_DTO));
+        assertNull(adsService.updateComment(1, 4, CREATE_OR_UPDATE_COMMENT_1_DTO));
+        assertNull(adsService.updateComment(2, 1, CREATE_OR_UPDATE_COMMENT_1_DTO));
     }
 }

@@ -4,6 +4,7 @@ import org.apache.log4j.Logger;
 import org.mapstruct.Mapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import ru.skypro.homework.config.ClockConfig;
@@ -22,7 +23,6 @@ import javax.transaction.Transactional;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -222,7 +222,7 @@ public class AdsServiceImpl implements AdsService {
             return false;
         }
         if (user == null) {
-            return false;
+            throw new UsernameNotFoundException("User doesn't have such rights!");
         }
         try {
             adRepository.delete(ad);
@@ -254,19 +254,18 @@ public class AdsServiceImpl implements AdsService {
         User user = getUser();
         Ad adUpdate = adMapper.createOrUpdateAdDtoToAd(createOrUpdateAdDTO);
         Ad ad = getThatAd(pk);
-        if (user != null) {
+        if (user != null && ad != null) {
             user = userCheck(user, ad);
         } else {
             return null;
         }
-        if (ad != null && user != null) {
-            ad.setTitle(adUpdate.getTitle());
-            ad.setPrice(adUpdate.getPrice());
-            ad.setDescription(adUpdate.getDescription());
-            ad = adRepository.save(ad);
-        } else {
-            return null;
+        if (user == null) {
+            throw new UsernameNotFoundException("User doesn't have such rights!");
         }
+        ad.setTitle(adUpdate.getTitle());
+        ad.setPrice(adUpdate.getPrice());
+        ad.setDescription(adUpdate.getDescription());
+        ad = adRepository.save(ad);
         return adMapper.adToAdDto(ad);
     }
 
@@ -319,7 +318,8 @@ public class AdsServiceImpl implements AdsService {
     public String updateAdImage(Integer pk, MultipartFile image) {
         User user = getUser();
         Ad ad = getThatAd(pk);
-        if (ad != null && ad.getAuthor().equals(user)) {
+        user = userCheck(user, ad);
+        if (ad != null && user != null) {
             Path filePath = null;
             String fileName = "user_" + user.getId() + "_ad_" + ad.getPk() + "." + getExtension(image.getOriginalFilename());
             try {
@@ -370,12 +370,7 @@ public class AdsServiceImpl implements AdsService {
         }
         List<Comment> commentsList = commentRepository.findByAd(ad);
         if (commentsList.isEmpty()) {
-            CommentsDTO commentsDTO = new CommentsDTO();
-            commentsDTO.setCount(0);
-            CommentDTO commentDTO = new CommentDTO();
-            List<CommentDTO> commentDTOList = new ArrayList<>(List.of(commentDTO));
-            commentsDTO.setResults(commentDTOList);
-            return commentsDTO;
+            return null;
         } else {
             return commentMapper.commentListToCommentsDto(commentsList);
         }
@@ -438,10 +433,14 @@ public class AdsServiceImpl implements AdsService {
             return false;
         }
         if (user == null) {
+            throw new UsernameNotFoundException("User doesn't have such rights!");
+        }
+        if (comment.getAd().equals(ad)) {
+            commentRepository.delete(comment);
+            return true;
+        } else {
             return false;
         }
-        commentRepository.delete(comment);
-        return true;
     }
 
     /**
@@ -469,18 +468,13 @@ public class AdsServiceImpl implements AdsService {
         if (user == null || ad == null) {
             return null;
         }
-        Comment comment = null;
-        try {
-            comment = commentRepository.findByPk(commentPk).get();
-        } catch (NoSuchElementException e) {
-            log.error(e.getMessage());
-        }
-        if (comment == null) {
-            comment = new Comment(commentPk, user, user.getImage(), user.getFirstName(), clock.clock().millis(), createOrUpdateCommentDTO.getText(), ad);
+        Comment comment = getComment(commentPk);
+        if (comment == null || !comment.getAd().equals(ad)) {
+            return null;
         } else {
             user = userCheck(user, comment);
             if (user == null) {
-                return null;
+                throw new UsernameNotFoundException("User doesn't have such rights!");
             }
             comment.setText(createOrUpdateCommentDTO.getText());
         }

@@ -34,7 +34,7 @@ public class ImageServiceImpl implements ImageService {
     private String userImageDir;
     @Value("${ad.image.dir.path}")
     private String addsImageDir;
-    private static final Logger log = Logger.getLogger(UsersServiceImpl.class);
+    private static final Logger log = Logger.getLogger(ImageServiceImpl.class);
 
     /**
      * A method of the service for getting {@link Array} of {@link Byte} with image of user or ad. <br>

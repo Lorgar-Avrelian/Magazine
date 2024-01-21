@@ -69,14 +69,12 @@ public class UsersServiceImpl implements UsersService {
     @Override
     public void setPassword(NewPasswordDTO newPassword) {
         User user = null;
-        newPassword.setCurrentPassword(passwordEncoderConfig.passwordEncoder().encode(newPassword.getCurrentPassword()));
-        newPassword.setNewPassword(passwordEncoderConfig.passwordEncoder().encode(newPassword.getNewPassword()));
         try {
             user = userRepository.findByEmail(getCurrentUsername()).get();
         } catch (NoSuchElementException e) {
             log.error(e.getMessage());
         }
-        if (user != null && passwordEncoderConfig.passwordEncoder().matches(user.getPassword(), newPassword.getCurrentPassword())) {
+        if (user != null && passwordEncoderConfig.passwordEncoder().matches(newPassword.getCurrentPassword(), user.getPassword())) {
             user.setPassword(passwordEncoderConfig.passwordEncoder().encode(newPassword.getNewPassword()));
             userRepository.save(user);
         } else {

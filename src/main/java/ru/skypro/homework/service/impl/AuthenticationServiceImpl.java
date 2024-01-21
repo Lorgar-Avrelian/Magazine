@@ -68,7 +68,7 @@ public class AuthenticationServiceImpl implements AuthenticationService, UserDet
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final PasswordEncoderConfig encoderConfiguration;
-    private static final Logger log = Logger.getLogger(AdsServiceImpl.class);
+    private static final Logger log = Logger.getLogger(AuthenticationServiceImpl.class);
 
     public AuthenticationServiceImpl(UserRepository userRepository, UserMapper userMapper, PasswordEncoderConfig encoderConfiguration) {
         this.userRepository = userRepository;
@@ -198,7 +198,13 @@ public class AuthenticationServiceImpl implements AuthenticationService, UserDet
     public User register(RegisterDTO registerDTO) {
         User newUser = userMapper.registerDtoToUser(registerDTO);
         newUser.setPassword(encoderConfiguration.passwordEncoder().encode(newUser.getPassword()));
-        if (userRepository.findByEmail(newUser.getEmail()).isEmpty()) {
+        User registredUser = null;
+        try {
+            registredUser = userRepository.findByEmail(newUser.getEmail()).get();
+        } catch (NoSuchElementException e) {
+            log.error(e.getMessage());
+        }
+        if (registredUser == null) {
             return userRepository.save(newUser);
         } else {
             return null;

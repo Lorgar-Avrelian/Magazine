@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 import ru.skypro.homework.service.ImageService;
 import ru.skypro.homework.service.impl.ImageServiceImpl;
-import ru.skypro.homework.service.impl.UsersServiceImpl;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -33,7 +32,7 @@ import java.lang.reflect.Array;
 @RestController
 public class ImageController {
     private final ImageServiceImpl imageService;
-    private static final Logger log = Logger.getLogger(UsersServiceImpl.class);
+    private static final Logger log = Logger.getLogger(ImageController.class);
 
     public ImageController(ImageServiceImpl imageService) {
         this.imageService = imageService;
