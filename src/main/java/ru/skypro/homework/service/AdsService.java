@@ -4,6 +4,8 @@ import org.springframework.web.multipart.MultipartFile;
 import ru.skypro.homework.dto.*;
 import ru.skypro.homework.service.impl.AdsServiceImpl;
 
+import java.io.FileNotFoundException;
+
 /**
  * A service for processing ads and ad commits requests. <br>
  * <br>
@@ -110,7 +112,7 @@ public interface AdsService {
      * @return {@link String}
      * @see AdsServiceImpl#updateAdImage(Integer, MultipartFile)
      */
-    String updateAdImage(Integer id, MultipartFile image);
+    String updateAdImage(Integer id, MultipartFile image) throws FileNotFoundException;
 
     /**
      * A method of the service for getting list of comments to the ad having this id in form DTO {@link CommentsDTO}. <br>

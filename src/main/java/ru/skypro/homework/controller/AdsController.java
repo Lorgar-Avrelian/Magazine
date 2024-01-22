@@ -18,6 +18,7 @@ import ru.skypro.homework.service.AdsService;
 import ru.skypro.homework.service.impl.AdsServiceImpl;
 
 import javax.validation.Valid;
+import java.io.FileNotFoundException;
 
 /**
  * A controller for ads and ad commits requests. <br>
@@ -115,7 +116,12 @@ public class AdsController {
     )
     @PostMapping(consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     public ResponseEntity<AdDTO> postAd(@RequestPart("properties") @Valid CreateOrUpdateAdDTO ad, @RequestPart("image") MultipartFile image) {
-        return ResponseEntity.status(201).body(adsService.addAd(ad, image));
+        AdDTO newAd = adsService.addAd(ad, image);
+        if (newAd != null) {
+            return ResponseEntity.status(201).body(newAd);
+        } else {
+            return ResponseEntity.status(401).build();
+        }
     }
 
     /**
@@ -451,11 +457,20 @@ public class AdsController {
     )
     @PatchMapping(path = "/{id}/image", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     public ResponseEntity<String> patchAdImage(@PathVariable Integer id, @RequestBody MultipartFile image) {
-        String imageUrl = adsService.updateAdImage(id, image);
+        String imageUrl;
+        try {
+            imageUrl = adsService.updateAdImage(id, image);
+        } catch (UsernameNotFoundException e) {
+            log.error(e.getMessage());
+            return ResponseEntity.status(401).build();
+        } catch (FileNotFoundException e) {
+            log.error(e.getMessage());
+            return ResponseEntity.status(404).build();
+        }
         if (imageUrl != null) {
             return ResponseEntity.ok(imageUrl);
         } else {
-            return ResponseEntity.status(404).build();
+            return ResponseEntity.status(403).build();
         }
     }
 

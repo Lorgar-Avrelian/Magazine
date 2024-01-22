@@ -20,6 +20,9 @@ public class Constants {
     public static final Ad AD_1 = new Ad(1, USER, "user_1_ad_1.jpg", 1111, "Test title 1", "Test description 1");
     public static final Ad AD_2 = new Ad(2, USER, "user_1_ad_2.jpg", 2222, "Test title 2", "Test description 2");
     public static final Ad AD_3 = new Ad(3, ADMIN, "user_2_ad_3.jpg", 3333, "Test title 3", "Test description 3");
+    public static final Ad AD_1_CREATE = new Ad(null, USER, null, 1111, "Test title 1", "Test description 1");
+    public static final Ad AD_2_CREATE = new Ad(null, USER, null, 2222, "Test title 2", "Test description 2");
+    public static final Ad AD_3_CREATE = new Ad(null, ADMIN, null, 3333, "Test title 3", "Test description 3");
     public static final Comment COMMENT_1 = new Comment(1, USER, USER.getImage(), USER.getFirstName(), TIME_1.getTime(), "Test comment text 1", AD_1);
     public static final Comment COMMENT_2 = new Comment(2, USER, USER.getImage(), USER.getFirstName(), TIME_2.getTime(), "Test comment text 2", AD_1);
     public static final Comment COMMENT_3 = new Comment(3, ADMIN, ADMIN.getImage(), ADMIN.getFirstName(), TIME_3.getTime(), "Test comment text 3", AD_1);

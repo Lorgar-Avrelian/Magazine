@@ -315,36 +315,42 @@ public class AdsServiceImpl implements AdsService {
      * @see AdRepository#save(Object)
      */
     @Override
-    public String updateAdImage(Integer pk, MultipartFile image) {
+    public String updateAdImage(Integer pk, MultipartFile image) throws FileNotFoundException {
         User user = getUser();
+        if (user == null) {
+            throw new UsernameNotFoundException("User doesn't have such rights!");
+        }
         Ad ad = getThatAd(pk);
+        if (ad == null) {
+            throw new FileNotFoundException("File does not exist!");
+        }
         user = userCheck(user, ad);
-        if (ad != null && user != null) {
-            Path filePath = null;
-            String fileName = "user_" + user.getId() + "_ad_" + ad.getPk() + "." + getExtension(image.getOriginalFilename());
-            try {
-                filePath = Path.of(imageDir, fileName);
-                Files.createDirectories(filePath.getParent());
-                Files.deleteIfExists(filePath);
-            } catch (IOException e) {
-                log.error(e.getMessage());
-            }
-            try (
-                    InputStream is = image.getInputStream();
-                    OutputStream os = Files.newOutputStream(filePath, CREATE_NEW);
-                    BufferedInputStream bis = new BufferedInputStream(is, 1024);
-                    BufferedOutputStream bos = new BufferedOutputStream(os, 1024)
-            ) {
-                bis.transferTo(bos);
-            } catch (IOException e) {
-                log.error(e.getMessage());
-            }
-            ad.setImage(fileName);
-            adRepository.save(ad);
-            return String.valueOf(filePath);
-        } else {
+        if (user == null) {
             return null;
         }
+        Path filePath = null;
+        String fileName = "user_" + user.getId() + "_ad_" + ad.getPk() + "." + getExtension(image.getOriginalFilename());
+        try {
+            filePath = Path.of(imageDir, fileName);
+            Files.createDirectories(filePath.getParent());
+            Files.deleteIfExists(filePath);
+        } catch (IOException e) {
+            log.error(e.getMessage());
+        }
+        try (
+                InputStream is = image.getInputStream();
+                OutputStream os = Files.newOutputStream(filePath, CREATE_NEW);
+                BufferedInputStream bis = new BufferedInputStream(is, 1024);
+                BufferedOutputStream bos = new BufferedOutputStream(os, 1024)
+        ) {
+            bis.transferTo(bos);
+        } catch (IOException e) {
+            log.error(e.getMessage());
+            return null;
+        }
+        ad.setImage(fileName);
+        adRepository.save(ad);
+        return String.valueOf(filePath);
     }
 
     /**
@@ -366,7 +372,7 @@ public class AdsServiceImpl implements AdsService {
     public CommentsDTO getAdComments(Integer pk) {
         Ad ad = getThatAd(pk);
         if (ad == null) {
-            return null;
+            return new CommentsDTO();
         }
         List<Comment> commentsList = commentRepository.findByAd(ad);
         if (commentsList.isEmpty()) {

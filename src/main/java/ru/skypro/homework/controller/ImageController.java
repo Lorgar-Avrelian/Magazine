@@ -78,7 +78,7 @@ public class ImageController {
             return imageService.getImage(imageName, response);
         } catch (IOException e) {
             log.error(e.getMessage());
-            return ResponseEntity.status(401).build();
+            return ResponseEntity.status(400).build();
         }
     }
 }

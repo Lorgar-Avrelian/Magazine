@@ -1,21 +1,23 @@
 package ru.skypro.homework;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.tika.io.IOUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
@@ -40,26 +42,37 @@ import ru.skypro.homework.service.impl.AuthenticationServiceImpl;
 import ru.skypro.homework.service.impl.ImageServiceImpl;
 import ru.skypro.homework.service.impl.UsersServiceImpl;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Clock;
 import java.util.List;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.anonymous;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static ru.skypro.homework.constants.Constants.*;
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@ExtendWith(SpringExtension.class)
-@ContextConfiguration
+@ActiveProfiles("test")
+@TestPropertySource(locations = "classpath:application-test.properties")
 class HomeworkApplicationTest {
+    @Value("${user.image.dir.path}")
+    private String userImageDir;
+    @Value("${ad.image.dir.path}")
+    private String adsImageDir;
+    @Value("${source.image.dir.path}")
+    private String sourceImageDir;
     private AdDTO AD_1_DTO = new AdDTO();
     private AdDTO AD_2_DTO = new AdDTO();
     private AdDTO AD_3_DTO = new AdDTO();
@@ -294,6 +307,9 @@ class HomeworkApplicationTest {
         lenient().when(adRepository.save(AD_1)).thenReturn(AD_1);
         lenient().when(adRepository.save(AD_2)).thenReturn(AD_2);
         lenient().when(adRepository.save(AD_3)).thenReturn(AD_3);
+        lenient().when(adRepository.save(AD_1_CREATE)).thenReturn(AD_1);
+        lenient().when(adRepository.save(AD_2_CREATE)).thenReturn(AD_2);
+        lenient().when(adRepository.save(AD_3_CREATE)).thenReturn(AD_3);
         lenient().when(adRepository.findByAuthor(USER)).thenReturn(ADS_USER);
         lenient().when(adRepository.findByAuthor(ADMIN)).thenReturn(ADS_ADMIN);
         lenient().when(commentRepository.findByAd(AD_1)).thenReturn(COMMENTS);
@@ -440,8 +456,34 @@ class HomeworkApplicationTest {
      * @throws Exception
      */
     @Test
-    @WithMockUser(value = "user@test.com", username = "user@test.com")
     void meImage() throws Exception {
+        byte[] inputImage = Files.readAllBytes(Path.of(sourceImageDir, "user.jpg"));
+        MockMultipartFile multipartFile = new MockMultipartFile("image", "user.jpg", MediaType.IMAGE_JPEG_VALUE, inputImage);
+        mockMvc.perform(multipart(HttpMethod.PATCH, "/users/me/image").file(multipartFile)
+                                                                      .with(user("user@test.com").password("123")))
+               .andExpect(status().isOk());
+        byte[] result = Files.readAllBytes(Path.of(userImageDir, USER.getImage()));
+        try (
+                InputStream inputStream1 = new ByteArrayInputStream(result);
+                InputStream inputStream2 = new FileInputStream(Path.of(userImageDir, USER.getImage()).toFile())) {
+            assertTrue(IOUtils.contentEquals(inputStream1, inputStream2));
+        }
+        inputImage = Files.readAllBytes(Path.of(sourceImageDir, "admin.jpg"));
+        multipartFile = new MockMultipartFile("image", "admin.jpg", MediaType.IMAGE_JPEG_VALUE, inputImage);
+        mockMvc.perform(multipart(HttpMethod.PATCH, "/users/me/image").file(multipartFile)
+                                                                      .with(user("admin@test.com").password("321")))
+               .andExpect(status().isOk());
+        result = Files.readAllBytes(Path.of(userImageDir, ADMIN.getImage()));
+        try (
+                InputStream inputStream1 = new ByteArrayInputStream(result);
+                InputStream inputStream2 = new FileInputStream(Path.of(userImageDir, ADMIN.getImage()).toFile())) {
+            assertTrue(IOUtils.contentEquals(inputStream1, inputStream2));
+        }
+        inputImage = Files.readAllBytes(Path.of(sourceImageDir, "user.jpg"));
+        multipartFile = new MockMultipartFile("image", "user.jpg", MediaType.IMAGE_JPEG_VALUE, inputImage);
+        mockMvc.perform(multipart(HttpMethod.PATCH, "/users/me/image").file(multipartFile)
+                                                                      .with(anonymous()))
+               .andExpect(status().isUnauthorized());
     }
 
     /**
@@ -547,6 +589,74 @@ class HomeworkApplicationTest {
      */
     @Test
     void postAd() throws Exception {
+        byte[] inputImage = Files.readAllBytes(Path.of(sourceImageDir, "ad_1.jpg"));
+        MockMultipartFile multipartFile = new MockMultipartFile("image", "ad_1.jpg", MediaType.IMAGE_JPEG_VALUE, inputImage);
+        MockMultipartFile propertiesFile = new MockMultipartFile("properties", "properties", MediaType.APPLICATION_JSON_VALUE, new ObjectMapper().writeValueAsString(CREATE_OR_UPDATE_AD_1_DTO).getBytes());
+        mockMvc.perform(multipart(HttpMethod.POST, "/ads").file(multipartFile).file(propertiesFile)
+                                                          .with(user("user@test.com").password("123"))
+                                                          .contentType(MediaType.MULTIPART_FORM_DATA_VALUE)
+                                                          .accept(MediaType.APPLICATION_JSON_VALUE))
+               .andExpect(status().isCreated())
+               .andExpect(jsonPath("$.author").value(AD_1_DTO.getAuthor()))
+               .andExpect(jsonPath("$.image").value(AD_1_DTO.getImage()))
+               .andExpect(jsonPath("$.pk").value(AD_1_DTO.getPk()))
+               .andExpect(jsonPath("$.price").value(AD_1_DTO.getPrice()))
+               .andExpect(jsonPath("$.title").value(AD_1_DTO.getTitle()));
+        byte[] outputImage = Files.readAllBytes(Path.of(adsImageDir, AD_1.getImage()));
+        try (
+                InputStream inputStream1 = new ByteArrayInputStream(inputImage);
+                InputStream inputStream2 = new ByteArrayInputStream(outputImage)
+        ) {
+            assertTrue(IOUtils.contentEquals(inputStream1, inputStream2));
+        }
+        inputImage = Files.readAllBytes(Path.of(sourceImageDir, "ad_2.jpg"));
+        multipartFile = new MockMultipartFile("image", "ad_2.jpg", MediaType.IMAGE_JPEG_VALUE, inputImage);
+        propertiesFile = new MockMultipartFile("properties", "properties", MediaType.APPLICATION_JSON_VALUE, new ObjectMapper().writeValueAsString(CREATE_OR_UPDATE_AD_2_DTO).getBytes());
+        mockMvc.perform(multipart(HttpMethod.POST, "/ads").file(multipartFile).file(propertiesFile)
+                                                          .with(user("user@test.com").password("123"))
+                                                          .contentType(MediaType.MULTIPART_FORM_DATA_VALUE)
+                                                          .accept(MediaType.APPLICATION_JSON_VALUE))
+               .andExpect(status().isCreated())
+               .andExpect(jsonPath("$.author").value(AD_2_DTO.getAuthor()))
+               .andExpect(jsonPath("$.image").value(AD_2_DTO.getImage()))
+               .andExpect(jsonPath("$.pk").value(AD_2_DTO.getPk()))
+               .andExpect(jsonPath("$.price").value(AD_2_DTO.getPrice()))
+               .andExpect(jsonPath("$.title").value(AD_2_DTO.getTitle()));
+        outputImage = Files.readAllBytes(Path.of(adsImageDir, AD_2.getImage()));
+        try (
+                InputStream inputStream1 = new ByteArrayInputStream(inputImage);
+                InputStream inputStream2 = new ByteArrayInputStream(outputImage)
+        ) {
+            assertTrue(IOUtils.contentEquals(inputStream1, inputStream2));
+        }
+        inputImage = Files.readAllBytes(Path.of(sourceImageDir, "ad_3.jpg"));
+        multipartFile = new MockMultipartFile("image", "ad_3.jpg", MediaType.IMAGE_JPEG_VALUE, inputImage);
+        propertiesFile = new MockMultipartFile("properties", "properties", MediaType.APPLICATION_JSON_VALUE, new ObjectMapper().writeValueAsString(CREATE_OR_UPDATE_AD_3_DTO).getBytes());
+        mockMvc.perform(multipart(HttpMethod.POST, "/ads").file(multipartFile).file(propertiesFile)
+                                                          .with(user("admin@test.com").password("321"))
+                                                          .contentType(MediaType.MULTIPART_FORM_DATA_VALUE)
+                                                          .accept(MediaType.APPLICATION_JSON_VALUE))
+               .andExpect(status().isCreated())
+               .andExpect(jsonPath("$.author").value(AD_3_DTO.getAuthor()))
+               .andExpect(jsonPath("$.image").value(AD_3_DTO.getImage()))
+               .andExpect(jsonPath("$.pk").value(AD_3_DTO.getPk()))
+               .andExpect(jsonPath("$.price").value(AD_3_DTO.getPrice()))
+               .andExpect(jsonPath("$.title").value(AD_3_DTO.getTitle()));
+        outputImage = Files.readAllBytes(Path.of(adsImageDir, AD_3.getImage()));
+        try (
+                InputStream inputStream1 = new ByteArrayInputStream(inputImage);
+                InputStream inputStream2 = new ByteArrayInputStream(outputImage)
+        ) {
+            assertTrue(IOUtils.contentEquals(inputStream1, inputStream2));
+        }
+        inputImage = Files.readAllBytes(Path.of(sourceImageDir, "ad_1.jpg"));
+        multipartFile = new MockMultipartFile("image", "ad_1.jpg", MediaType.IMAGE_JPEG_VALUE, inputImage);
+        propertiesFile = new MockMultipartFile("properties", "properties", MediaType.APPLICATION_JSON_VALUE, new ObjectMapper().writeValueAsString(CREATE_OR_UPDATE_AD_1_DTO).getBytes());
+        mockMvc.perform(multipart(HttpMethod.POST, "/ads").file(multipartFile).file(propertiesFile)
+                                                          .with(anonymous())
+                                                          .contentType(MediaType.MULTIPART_FORM_DATA_VALUE)
+                                                          .accept(MediaType.APPLICATION_JSON_VALUE))
+               .andExpect(status().isUnauthorized());
     }
 
     /**
@@ -759,6 +869,94 @@ class HomeworkApplicationTest {
      */
     @Test
     void patchAdImage() throws Exception {
+        byte[] inputImage = Files.readAllBytes(Path.of(sourceImageDir, "ad_1.jpg"));
+        MockMultipartFile multipartFile = new MockMultipartFile("image", "ad_1.jpg", MediaType.IMAGE_JPEG_VALUE, inputImage);
+        mockMvc.perform(multipart(HttpMethod.PATCH, "/ads/1/image").file(multipartFile)
+                                                                   .with(user("user@test.com").password("123"))
+                                                                   .accept(MediaType.APPLICATION_JSON_VALUE))
+               .andExpect(status().isOk())
+               .andExpect(content().string(String.valueOf(Path.of(adsImageDir, AD_1.getImage()))));
+        byte[] outputImage = Files.readAllBytes(Path.of(adsImageDir, AD_1.getImage()));
+        try (
+                InputStream inputStream1 = new ByteArrayInputStream(inputImage);
+                InputStream inputStream2 = new ByteArrayInputStream(outputImage)
+        ) {
+            assertTrue(IOUtils.contentEquals(inputStream1, inputStream2));
+        }
+        inputImage = Files.readAllBytes(Path.of(sourceImageDir, "ad_2.jpg"));
+        multipartFile = new MockMultipartFile("image", "ad_2.jpg", MediaType.IMAGE_JPEG_VALUE, inputImage);
+        mockMvc.perform(multipart(HttpMethod.PATCH, "/ads/2/image").file(multipartFile)
+                                                                   .with(user("user@test.com").password("123"))
+                                                                   .accept(MediaType.APPLICATION_JSON_VALUE))
+               .andExpect(status().isOk())
+               .andExpect(content().string(String.valueOf(Path.of(adsImageDir, AD_2.getImage()))));
+        outputImage = Files.readAllBytes(Path.of(adsImageDir, AD_2.getImage()));
+        try (
+                InputStream inputStream1 = new ByteArrayInputStream(inputImage);
+                InputStream inputStream2 = new ByteArrayInputStream(outputImage)
+        ) {
+            assertTrue(IOUtils.contentEquals(inputStream1, inputStream2));
+        }
+        inputImage = Files.readAllBytes(Path.of(sourceImageDir, "ad_3.jpg"));
+        multipartFile = new MockMultipartFile("image", "ad_3.jpg", MediaType.IMAGE_JPEG_VALUE, inputImage);
+        mockMvc.perform(multipart(HttpMethod.PATCH, "/ads/3/image").file(multipartFile)
+                                                                   .with(user("user@test.com").password("123"))
+                                                                   .accept(MediaType.APPLICATION_JSON_VALUE))
+               .andExpect(status().isForbidden());
+        inputImage = Files.readAllBytes(Path.of(sourceImageDir, "ad_1.jpg"));
+        multipartFile = new MockMultipartFile("image", "ad_1.jpg", MediaType.IMAGE_JPEG_VALUE, inputImage);
+        mockMvc.perform(multipart(HttpMethod.PATCH, "/ads/1/image").file(multipartFile)
+                                                                   .with(user("admin@test.com").password("321"))
+                                                                   .accept(MediaType.APPLICATION_JSON_VALUE))
+               .andExpect(status().isOk())
+               .andExpect(content().string(String.valueOf(Path.of(adsImageDir, AD_1.getImage()))));
+        outputImage = Files.readAllBytes(Path.of(adsImageDir, AD_1.getImage()));
+        try (
+                InputStream inputStream1 = new ByteArrayInputStream(inputImage);
+                InputStream inputStream2 = new ByteArrayInputStream(outputImage)
+        ) {
+            assertTrue(IOUtils.contentEquals(inputStream1, inputStream2));
+        }
+        inputImage = Files.readAllBytes(Path.of(sourceImageDir, "ad_2.jpg"));
+        multipartFile = new MockMultipartFile("image", "ad_2.jpg", MediaType.IMAGE_JPEG_VALUE, inputImage);
+        mockMvc.perform(multipart(HttpMethod.PATCH, "/ads/2/image").file(multipartFile)
+                                                                   .with(user("admin@test.com").password("321"))
+                                                                   .accept(MediaType.APPLICATION_JSON_VALUE))
+               .andExpect(status().isOk())
+               .andExpect(content().string(String.valueOf(Path.of(adsImageDir, AD_2.getImage()))));
+        outputImage = Files.readAllBytes(Path.of(adsImageDir, AD_2.getImage()));
+        try (
+                InputStream inputStream1 = new ByteArrayInputStream(inputImage);
+                InputStream inputStream2 = new ByteArrayInputStream(outputImage)
+        ) {
+            assertTrue(IOUtils.contentEquals(inputStream1, inputStream2));
+        }
+        inputImage = Files.readAllBytes(Path.of(sourceImageDir, "ad_3.jpg"));
+        multipartFile = new MockMultipartFile("image", "ad_3.jpg", MediaType.IMAGE_JPEG_VALUE, inputImage);
+        mockMvc.perform(multipart(HttpMethod.PATCH, "/ads/3/image").file(multipartFile)
+                                                                   .with(user("admin@test.com").password("321"))
+                                                                   .accept(MediaType.APPLICATION_JSON_VALUE))
+               .andExpect(status().isOk())
+               .andExpect(content().string(String.valueOf(Path.of(adsImageDir, AD_3.getImage()))));
+        outputImage = Files.readAllBytes(Path.of(adsImageDir, AD_3.getImage()));
+        try (
+                InputStream inputStream1 = new ByteArrayInputStream(inputImage);
+                InputStream inputStream2 = new ByteArrayInputStream(outputImage)
+        ) {
+            assertTrue(IOUtils.contentEquals(inputStream1, inputStream2));
+        }
+        inputImage = Files.readAllBytes(Path.of(sourceImageDir, "ad_3.jpg"));
+        multipartFile = new MockMultipartFile("image", "ad_3.jpg", MediaType.IMAGE_JPEG_VALUE, inputImage);
+        mockMvc.perform(multipart(HttpMethod.PATCH, "/ads/3/image").file(multipartFile)
+                                                                   .with(anonymous())
+                                                                   .accept(MediaType.APPLICATION_JSON_VALUE))
+               .andExpect(status().isUnauthorized());
+        inputImage = Files.readAllBytes(Path.of(sourceImageDir, "ad_1.jpg"));
+        multipartFile = new MockMultipartFile("image", "ad_1.jpg", MediaType.IMAGE_JPEG_VALUE, inputImage);
+        mockMvc.perform(multipart(HttpMethod.PATCH, "/ads/4/image").file(multipartFile)
+                                                                   .with(user("user@test.com").password("123"))
+                                                                   .accept(MediaType.APPLICATION_JSON_VALUE))
+               .andExpect(status().isNotFound());
     }
 
     /**
@@ -1013,5 +1211,70 @@ class HomeworkApplicationTest {
      */
     @Test
     void downloadImage() throws Exception {
+        byte[] result = mockMvc.perform(get("/" + USER.getImage())
+                                                .with(user("user@test.com").password("123")))
+                               .andExpect(status().isOk())
+                               .andReturn().getResponse().getContentAsByteArray();
+        try (InputStream inputStream1 = new ByteArrayInputStream(result);
+             InputStream inputStream2 = new FileInputStream(Path.of(userImageDir, USER.getImage()).toFile())) {
+            assertTrue(IOUtils.contentEquals(inputStream1, inputStream2));
+        }
+        result = mockMvc.perform(get("/" + ADMIN.getImage())
+                                         .with(user("user@test.com").password("123")))
+                        .andExpect(status().isOk())
+                        .andReturn().getResponse().getContentAsByteArray();
+        try (InputStream inputStream1 = new ByteArrayInputStream(result);
+             InputStream inputStream2 = new FileInputStream(Path.of(userImageDir, ADMIN.getImage()).toFile())) {
+            assertTrue(IOUtils.contentEquals(inputStream1, inputStream2));
+        }
+        result = mockMvc.perform(get("/" + USER.getImage())
+                                         .with(user("admin@test.com").password("321")))
+                        .andExpect(status().isOk())
+                        .andReturn().getResponse().getContentAsByteArray();
+        try (InputStream inputStream1 = new ByteArrayInputStream(result);
+             InputStream inputStream2 = new FileInputStream(Path.of(userImageDir, USER.getImage()).toFile())) {
+            assertTrue(IOUtils.contentEquals(inputStream1, inputStream2));
+        }
+        result = mockMvc.perform(get("/" + ADMIN.getImage())
+                                         .with(user("admin@test.com").password("321")))
+                        .andExpect(status().isOk())
+                        .andReturn().getResponse().getContentAsByteArray();
+        try (InputStream inputStream1 = new ByteArrayInputStream(result);
+             InputStream inputStream2 = new FileInputStream(Path.of(userImageDir, ADMIN.getImage()).toFile())) {
+            assertTrue(IOUtils.contentEquals(inputStream1, inputStream2));
+        }
+        result = mockMvc.perform(get("/" + AD_1.getImage())
+                                         .with(user("user@test.com").password("123")))
+                        .andExpect(status().isOk())
+                        .andReturn().getResponse().getContentAsByteArray();
+        try (InputStream inputStream1 = new ByteArrayInputStream(result);
+             InputStream inputStream2 = new FileInputStream(Path.of(adsImageDir, AD_1.getImage()).toFile())) {
+            assertTrue(IOUtils.contentEquals(inputStream1, inputStream2));
+        }
+        result = mockMvc.perform(get("/" + AD_2.getImage())
+                                         .with(user("admin@test.com").password("321")))
+                        .andExpect(status().isOk())
+                        .andReturn().getResponse().getContentAsByteArray();
+        try (InputStream inputStream1 = new ByteArrayInputStream(result);
+             InputStream inputStream2 = new FileInputStream(Path.of(adsImageDir, AD_2.getImage()).toFile())) {
+            assertTrue(IOUtils.contentEquals(inputStream1, inputStream2));
+        }
+        result = mockMvc.perform(get("/" + AD_3.getImage())
+                                         .with(anonymous()))
+                        .andExpect(status().isOk())
+                        .andReturn().getResponse().getContentAsByteArray();
+        try (InputStream inputStream1 = new ByteArrayInputStream(result);
+             InputStream inputStream2 = new FileInputStream(Path.of(adsImageDir, AD_3.getImage()).toFile())) {
+            assertTrue(IOUtils.contentEquals(inputStream1, inputStream2));
+        }
+        mockMvc.perform(get("/wrong_image_name.jpg")
+                                .with(user("user@test.com").password("123")))
+               .andExpect(status().isBadRequest());
+        mockMvc.perform(get("/wrong_image_name.jpg")
+                                .with(user("admin@test.com").password("321")))
+               .andExpect(status().isBadRequest());
+        mockMvc.perform(get("/wrong_image_name.jpg")
+                                .with(anonymous()))
+               .andExpect(status().isBadRequest());
     }
 }
