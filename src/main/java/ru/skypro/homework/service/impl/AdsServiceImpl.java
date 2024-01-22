@@ -329,7 +329,7 @@ public class AdsServiceImpl implements AdsService {
             return null;
         }
         Path filePath = null;
-        String fileName = "user_" + user.getId() + "_ad_" + ad.getPk() + "." + getExtension(image.getOriginalFilename());
+        String fileName = "user_" + ad.getAuthor().getId() + "_ad_" + ad.getPk() + "." + getExtension(image.getOriginalFilename());
         try {
             filePath = Path.of(imageDir, fileName);
             Files.createDirectories(filePath.getParent());
